@@ -2,10 +2,12 @@ from ...event import Event
 
 
 class BotEvent(Event):
+    type: str
     """有关 [Bot] 的事件
     """
 
 class BotPassiveEvent(BotEvent):
+    # type: str
     """[Bot] 被动接收的事件
     """
 

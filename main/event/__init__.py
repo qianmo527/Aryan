@@ -8,11 +8,18 @@ class Event(BaseModel, metaclass=ABCMeta):
     @property
     def isIntercepted(self): pass # 事件是否已被拦截 所有监听器都可以拦截事件 拦截后低优先级的监听器将不会收到这个事件
 
-    @abstractmethod
     def intercept(self) -> NoReturn: pass
 
     class Config:
         arbitrary_types_allowed = True
+
+    def __repr__(self) -> str:
+        return self.__class__.__name__ + "(" + ", ".join(
+            (
+               f"{k}={repr(v)}"
+                for k, v in self.__dict__.items() if k != "type" and v 
+            )
+        ) + ")"
 
 
 class CancellableEvent(metaclass=ABCMeta):
@@ -50,5 +57,5 @@ class AbstractEvent(Event):
         self.__intercepted = True
 
     def cancel(self) -> NoReturn:
-        assert self is CancellableEvent
+        assert isinstance(self, CancellableEvent)
         self.__cancelled = True

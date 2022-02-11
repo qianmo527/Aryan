@@ -1,12 +1,14 @@
+from pydantic import BaseModel
+
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .single_message import MessageContent
-    from ..code.codable import CodableMessage
+# if TYPE_CHECKING:
+from .single_message import MessageContent
+from ..code.codable import CodableMessage
 
 
 class At(MessageContent, CodableMessage):
-    type = "At"
+    type: str = "At"
     target: int
     # display: str
 
@@ -16,6 +18,13 @@ class At(MessageContent, CodableMessage):
     def serializeToMiraiCode(self):
         return f"[mirai:at:{self.target}]"
 
+
 class AtAll(MessageContent, CodableMessage):
-    type = "AtAll"
+    type: str = "AtAll"
     display: str = "@全体成员"
+
+    def contentToString(self) -> str:
+        return self.display
+
+    def serializeToMiraiCode(self):
+        return f"[mirai:atall]"

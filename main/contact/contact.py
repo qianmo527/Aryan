@@ -11,15 +11,17 @@ if TYPE_CHECKING:
 class Contact(ContactOrBot):
     id: int
 
-    def sendMessage(self, message: Union[Message, str]) -> MessageReceipt:
+    def sendMessage(self, message: Union["Message", str]) -> "MessageReceipt['Contact']":
         """发送消息
 
         Returns:
             MessageReceipt:  消息回折 可 [MessageReceipt.quote()] 或 [MessageReceipt.recall()]
         """
 
-        message = message if isinstance(message, Message) else Plain(message)
+        message = message if isinstance(message, "Message") else Plain(message)
 
-    def uploadImage(resource): pass
+    def uploadImage(self, resource): pass
 
-    def recallMessage(self, source: Union[MessageChain, Source]): pass
+    def sendImage(self, image): pass
+
+    def recallMessage(self, source): pass  # : Union[MessageChain, Source]

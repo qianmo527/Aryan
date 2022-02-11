@@ -6,7 +6,7 @@ from .types import BotEvent
 
 
 class NudgeEvent(BotEvent, AbstractEvent):
-    type = "NudgeEvent"
+    type: str = "NudgeEvent"
     from_id: int = Field(..., alias="fromId")
     subject: Dict
     action: str

@@ -1,5 +1,10 @@
 from pydantic import Field
 
+
+from ...contact.member import MemberPerm
+from ...contact.group import Group
+from ...contact.member import Member
+
 from ...event import AbstractEvent
 from .types import (
     GroupEvent, GroupMemberEvent, GroupOperableEvent, GroupMemberInfoChangeEvent,
@@ -8,38 +13,38 @@ from .types import (
 
 
 class BotGroupPermissionChangeEvent(BotPassiveEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type = "BotGroupPermissionChangeEvent"
-    orogin: MemberPerm
+    type: str = "BotGroupPermissionChangeEvent"
+    origin: MemberPerm
     current: MemberPerm
     group: Group
 
 class BotMuteEvent(BotPassiveEvent, GroupMemberInfoChangeEvent):
-    type = "BotMuteEvent"
+    type: str = "BotMuteEvent"
     duration_seconds: int = Field(..., alias="durationSeconds")
     operator: Member
 
 class BotUnmuteEvent(BotPassiveEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type = "BotUnmuteEvent"
+    type: str = "BotUnmuteEvent"
     operator: Member
 
 class BotJoinGroupEvent(GroupEvent, BotPassiveEvent, AbstractEvent):
-    type = "BotJoinGroupEvent"
+    type: str = "BotJoinGroupEvent"
     group: Group
 
 class BotLeaveEvent(GroupMemberInfoChangeEvent, AbstractEvent):
     pass
 
 class BotLeaveEventActive(BotLeaveEvent):
-    type = "BotLeaveEventActive"
+    type: str = "BotLeaveEventActive"
     group: Group
 
 class BotLeaveEventKick(BotLeaveEvent):
-    type = "BotLeaveEventKick"
+    type: str = "BotLeaveEventKick"
     group: Group
     operator: Member
 
 class GroupRecallEvent(GroupEvent, AbstractEvent):
-    type = "GroupRecallEvent"
+    type: str = "GroupRecallEvent"
     authorId: int
     messageId: int
     time: int
@@ -47,49 +52,49 @@ class GroupRecallEvent(GroupEvent, AbstractEvent):
     operator: Member = None
 
 class GroupNameChangeEvent(GroupOperableEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type = "GroupNameChangeEvent"
+    type: str = "GroupNameChangeEvent"
     origin: str
     current: str
     group: Group
     operator: Member = None
 
 class GroupEntranceAnnouncementChangeEvent(GroupOperableEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type = "GroupEntranceAnnouncementChangeEvent"
+    type: str = "GroupEntranceAnnouncementChangeEvent"
     origin: str
     current: str
     group: Group
     operator: Member = None
 
 class GroupMuteAllEvent(GroupOperableEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type = "GroupMuteAllEvent"
+    type: str = "GroupMuteAllEvent"
     origin: bool
     current: bool
     group: Group
     operator: Member = None
 
 class GroupAllowAnonymousChatEvent(GroupOperableEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type: "GroupAllowAnonymousChatEvent"
+    type: str = "GroupAllowAnonymousChatEvent"
     origin: bool
     current: bool
     group: Group
     operator: Member = None
 
 class GroupAllowConfessTalkEvent(AbstractEvent, GroupMemberInfoChangeEvent):
-    type = "GroupAllowConfessTalkEvent"
+    type: str = "GroupAllowConfessTalkEvent"
     origin: bool
     new: bool
     group: Group
     is_by_bot: bool = Field(..., alias="isByBot")
 
 class GroupAllowMemberInviteEvent(GroupOperableEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type = "GroupAllowMemberInviteEvent"
+    type: str = "GroupAllowMemberInviteEvent"
     origin: bool
     current: bool
     group: Group
     operator: Member = None
 
 class MemberJoinEvent(GroupMemberEvent, BotPassiveEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type = "MemberJoinEvent"
+    type: str = "MemberJoinEvent"
     member: Member
     invitor: Member = None
 
@@ -97,45 +102,45 @@ class MemberLeaveEvent(GroupMemberEvent, GroupMemberInfoChangeEvent, AbstractEve
     pass
 
 class MemberLeaveEventKick(MemberLeaveEvent, GroupOperableEvent):
-    type = "MemberLeaveEventKick"
+    type: str = "MemberLeaveEventKick"
     member: Member
     operator: Member = None
 
 class MemberLeaveEventQuit(MemberLeaveEvent):
-    type = "MemberLeaveEventQuit"
+    type: str = "MemberLeaveEventQuit"
     member: Member
 
 class MemberCardChangeEvent(GroupMemberEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type = "MemberCardChangeEvent"
+    type: str = "MemberCardChangeEvent"
     origin: str
     current: str
     member: Member
 
 class MemberSpecialTitleChangeEvent(GroupMemberEvent, GroupOperableEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type = "MemberSpecialTitleChangeEvent"
+    type: str = "MemberSpecialTitleChangeEvent"
     origin: str
     current: str
     member: Member
 
 class MemberPermissionChangeEvent(GroupMemberEvent, BotPassiveEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type = "MemberPermissionChangeEvent"
+    type: str = "MemberPermissionChangeEvent"
     origin: MemberPerm
     current: MemberPerm
     member: Member
 
 class MemberMuteEvent(GroupMemberEvent, GroupOperableEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type = "MemberMuteEvent"
+    type: str = "MemberMuteEvent"
     duration_seconds: int = Field(..., alias="durationSeconds")
     member: Member
     operator: Member = None
 
 class MemberUnmuteEvent(GroupMemberEvent, GroupOperableEvent, GroupMemberInfoChangeEvent, AbstractEvent):
-    type = "MemberUnmuteEvent"
+    type: str = "MemberUnmuteEvent"
     member: Member
     operator: Member = None
 
 class MemberHonorChangeEvent(GroupMemberEvent, BotPassiveEvent, AbstractEvent):
-    type = "MemberHonorChangeEvent"
+    type: str = "MemberHonorChangeEvent"
     member: Member
     action: str  # Achieve / Lose
     honor: str
