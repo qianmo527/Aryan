@@ -24,10 +24,12 @@ class Mirai(MiraiProtocol):
     logger = logger
     bots: List["Bot"] = []
 
-    def __init__(self, session: MiraiSession, loop: Optional[asyncio.AbstractEventLoop]=None, bots: List=[]):
+    def __init__(self, session: MiraiSession, loop: Optional[asyncio.AbstractEventLoop]=None, bots: List["Bot"]=[]):
         super().__init__(connect_info=session, bots=bots)
         self.loop = loop or asyncio.get_event_loop()
         Mirai.__instance = self
+        for bot in bots:
+            bot.application = self
 
     @classmethod
     def getInstance(cls):
@@ -111,6 +113,7 @@ class Mirai(MiraiProtocol):
     async def lifecycle(self):
         self._update_forward_refs()
         await asyncio.gather(*[self.verify(bot) for bot in self.bots])
+        await asyncio.gather(*[bot.init() for bot in self.bots])
         await asyncio.gather(*[self.ws_all(bot) for bot in self.bots])
 
     @staticmethod
@@ -119,6 +122,7 @@ class Mirai(MiraiProtocol):
         from .contact.group import Group
         from .contact.member import Member
         from .bot import Bot
+        # TODO: 将所有所属Bot适配
         ContactOrBot.update_forward_refs(Bot=Bot)
         Group.update_forward_refs(Bot=Bot)
         Member.update_forward_refs(Bot=Bot, Group=Group)
@@ -127,7 +131,7 @@ class Mirai(MiraiProtocol):
         try:
             self.loop.run_until_complete(self.lifecycle())
         except KeyboardInterrupt:
-            pass
+            raise
         finally:
             self.loop.run_until_complete(self.shutdown())
 
@@ -150,19 +154,19 @@ class Mirai(MiraiProtocol):
 
     async def getFriendList(self, bot: "Bot"):
         async with self.session.get(
-            self.url_root(f"friendList?sessionKey={bot.configuration.http_session or bot.configuration.ws_session}")
+            self.url_root(f"friendList?sessionKey={bot.configuration.http_session or bot.configuration.ws_session}", bot)
         ) as response:
             from .contact.friend import Friend
             response.raise_for_status()
-            print(await response.json())
+            return [Friend.parse_obj(obj) for obj in (await response.json())["data"]]
 
     async def getGroupList(self, bot: "Bot"):
         async with self.session.get(
-            self.url_root(f"groupList?sessionKey={bot.configuration.http_session or bot.configuration.ws_session}")
+            self.url_root(f"groupList?sessionKey={bot.configuration.http_session or bot.configuration.ws_session}", bot)
         ) as response:
             from .contact.group import Group
             response.raise_for_status()
-            print(await response.json())
+            return [Group.parse_obj(obj) for obj in (await response.json())["data"]]
 
     async def sendFriendMessage(self):
         async with self.session.post(

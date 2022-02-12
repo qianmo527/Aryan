@@ -1,26 +1,12 @@
-import pickle
-from typing import TypeVar, Generic, List
-from pydantic import BaseModel
-from dataclasses import dataclass
+import asyncio
 
 
-T = TypeVar("T")
+async def a(num: int):
+    while True:
+        print(num)
+        asyncio.sleep(1)
 
-class Stack(Generic[T]):
-    def __init__(self) -> None:
-        self.items: List[T] = []
+async def main():
+    await asyncio.gather(*[a(num) for num in range(2)])
 
-    def push(self, item: T) -> None:
-        self.items.append(item)
-
-    def pop(self) -> T:
-        return self.items.pop()
-
-    @property
-    def isEmpty(self):
-        return not self.items
-
-class Test(Generic[T], BaseModel):
-    pass
-
-test = Test[int]()
+asyncio.run(main())

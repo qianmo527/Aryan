@@ -9,8 +9,8 @@ Mirai(
        ),
        loop=asyncio.get_event_loop(),
        bots=[
-              Bot(BotConfiguration(account=1375075223, password="aaaa1234")),
-              Bot(BotConfiguration(account=552282813, password="Mo13112506990"))
+              Bot(BotConfiguration(account=1375075223)),
+              Bot(BotConfiguration(account=552282813))
        ]
 ).launch_blocking()
 

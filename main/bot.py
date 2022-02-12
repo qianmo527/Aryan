@@ -15,7 +15,6 @@ from .application import Mirai
 @dataclass
 class BotConfiguration:
     account: int
-    password: str
     http_session: str = field(default=None, init=False)
     ws_session: str = field(default=None, init=False)
 
@@ -37,9 +36,11 @@ class Bot(UserOrBot):
             asStranger=Stranger(id=configuration.account), isOnline=True
         )
 
-    def init(self):
+    async def init(self):
         """初始化Bot信息
         """
+        self.friends = await self.getFriendList()
+        self.groups = await self.getGroupList()
 
     friends: List["Friend"] = [] # 好友列表 与服务器同步更新
     def getFriend(self, id: int):
