@@ -113,7 +113,7 @@ class Mirai(MiraiProtocol):
     async def lifecycle(self):
         self._update_forward_refs()
         await asyncio.gather(*[self.verify(bot) for bot in self.bots])
-        await asyncio.gather(*[bot.init() for bot in self.bots])
+        # await asyncio.gather(*[bot.init() for bot in self.bots])
         await asyncio.gather(*[self.ws_all(bot) for bot in self.bots])
 
     @staticmethod

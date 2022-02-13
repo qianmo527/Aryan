@@ -14,6 +14,8 @@ Mirai(
        ]
 ).launch_blocking()
 
+app = Mirai.getIntance()
+
 # source = Source.parse_obj({'type': 'Source', 'id': 8728, 'time': 1643272815})
 # print(source)
 # MessageChain.deserializeMiraiCode("[mirai:atall]")
