@@ -22,7 +22,7 @@ class BotConfiguration:
 class Bot(UserOrBot):
     configuration: BotConfiguration  # Bot配置
     isOnline: bool = True # 当 Bot 在线 (可正常收发消息) 时返回 True
-    eventChannel: str = None # 来自这个 Bot 的 BotEvent 的事件通道  TODO
+    eventChannel: str = None # 来自这个 Bot 的 BotEvent 的事件通道  TODO pydantic创建时无法新建问题
     otherClients: List = []  # 其他设备列表  还没写|不打算写 一般情况为空
     # asFriend: Friend # User.id 与 Bot.id 相同的 Friend 实例
     # asStranger: Stranger # User.id 与 Bot.id 相同的 Stranger 实例
@@ -31,9 +31,11 @@ class Bot(UserOrBot):
     def __init__(self, configuration: BotConfiguration):
         from .contact.friend import Friend
         from .contact.stranger import Stranger
+        from .event.channel import GlobalEventChannel
         super().__init__(
             id=configuration.account, configuration=configuration, asFriend=Friend(id=configuration.account),
-            asStranger=Stranger(id=configuration.account), isOnline=True
+            asStranger=Stranger(id=configuration.account), isOnline=True,
+            eventChannel=GlobalEventChannel.filter(lambda event: event.bot==self)
         )
 
     async def init(self):

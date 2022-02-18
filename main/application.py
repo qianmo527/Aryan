@@ -135,7 +135,6 @@ class Mirai(MiraiProtocol):
         finally:
             self.loop.run_until_complete(self.shutdown())
 
-    # TODO: 其实可以合并的
     C = TypeVar("C", bound="Contact")
     async def getContactList(self, c: Generic[C], bot: "Bot"):
         from .contact.friend import Friend
