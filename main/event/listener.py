@@ -1,9 +1,7 @@
 """事件监听器"""
 import asyncio
 from enum import Enum
-from typing import Dict, List, Type
-from types import FunctionType
-
+from typing import Dict, List, Type, Callable
 
 from . import Event
 
@@ -42,8 +40,13 @@ class EventPriority(Enum):
     LOW = 2,
     LOWEST = 1,
 
-    MONITOR = 0,
+    MONITOR = 0
     "使用此优先级的监听器应遵守约束 不拦截事件"
+
+    @classmethod
+    @property
+    def prioritiesExcludedMonitor(cls) -> list:
+        return [priority for priority in cls if not priority == cls.MONITOR]
 
 
 class Listener:
@@ -55,50 +58,71 @@ class Listener:
         self.concurrencyKind = concurrencyKind
         self.priority = priority
 
-    def onEvent(self) -> ListeningStatus:
+    async def onEvent(self, event: Event) -> ListeningStatus:
         pass
 
     def complete(self):
         """结束监听"""
 
-    @staticmethod
-    def createListener(
-        handler: FunctionType,
-        concurrencyKind: ConcurrencyKind,
-        priority: EventPriority=EventPriority.NORMAL
-    ):
-        return Listener()
-
 
 class ListenerRegistry:
-    event: Type[Event]
+    type: Type[Event]
     listener: Listener
 
 
-class GlobalEventListeners:
-    ALL_LEVEL_REGISTRIES: Dict[EventPriority, List[ListenerRegistry]]
-
+class GlobalEventListeners(dict):
     def __init__(self):
-        self.ALL_LEVEL_REGISTRIES = {priority: [] for priority in EventPriority}
-
-    def get(self, priority: EventPriority):
-        """返回优先级priority对应的监听器列表"""
-        return self.ALL_LEVEL_REGISTRIES[priority]
-
-    def __getitem__(self, priority: EventPriority):
-        return self.ALL_LEVEL_REGISTRIES[priority]
-
-    def __contains__(self, item):
-        return item in self.ALL_LEVEL_REGISTRIES.values()
+        super().__init__({priority: [] for priority in EventPriority})
+GlobalEventListeners = GlobalEventListeners()  # 确保只存在单一实例 可用INSTANCE代替
 
 
 class ListenerHostInterface:  # TODO: 把这个骚里骚气的东西写了谢谢 | 强大的扩展性
 
-    def EventHandler(self): pass
-
-
+    def EventHandler(self): pass  # annotation
 class SimpleListenerHost(ListenerHostInterface):
     pass
+
+
+class Handler(Listener):
+    """事件处理器"""
+    handler: Callable[..., ListeningStatus]
+    priority: EventPriority
+    concurrencyKind: ConcurrencyKind
+
+    def __init__(self, handler: Callable[..., ListeningStatus], priority: EventPriority, concurrencyKind: ConcurrencyKind):
+        self.handler = handler
+        super().__init__(priority, concurrencyKind)
+
+    async def onEvent(self, event: Event) -> ListeningStatus:
+        if event.isCancelled: return ListeningStatus.STOPPED
+        status = await self.handler(event)
+        if status == ListeningStatus.STOPPED:
+            return ListeningStatus.STOPPED
+        else:
+            return ListeningStatus.LISTENING
+
+
+def callAndRemoveIfRequired(event: Event):
+    for p in EventPriority.prioritiesExcludedMonitor:
+        container: List[ListenerRegistry] = GlobalEventListeners[p]
+        for registry in container:
+            if event.isIntercepted: return
+            if not isinstance(event, registry.type): continue
+            listener = registry.listener
+            process(container, registry, listener, event)
+
+    if event.isIntercepted: return
+    container: List[ListenerRegistry] = GlobalEventListeners[EventPriority.MONITOR]
+    # switch(match) area
+    if len(container) == 0: return
+    elif len(container) == 1:
+        registry: ListenerRegistry = container[0]
+        if not isinstance(registry.type, event): return
+        process(container, registry, registry.listener, event)
+    else:
+        for registry in container:
+            if not isinstance(registry.type, event): continue
+            process(container, registry, registry.listener, event)
 
 
 async def process(

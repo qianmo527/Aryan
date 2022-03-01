@@ -6,7 +6,10 @@ from abc import ABCMeta, abstractmethod
 class Event(BaseModel, metaclass=ABCMeta):
 
     @property
-    def isIntercepted(self): pass # 事件是否已被拦截 所有监听器都可以拦截事件 拦截后低优先级的监听器将不会收到这个事件
+    def isIntercepted(self): pass  # 事件是否已被拦截 所有监听器都可以拦截事件 拦截后低优先级的监听器将不会收到这个事件
+
+    @property
+    def isCancelled(self): pass
 
     def intercept(self) -> NoReturn: pass
 
@@ -16,8 +19,8 @@ class Event(BaseModel, metaclass=ABCMeta):
     def __repr__(self) -> str:
         return self.__class__.__name__ + "(" + ", ".join(
             (
-               f"{k}={repr(v)}"
-                for k, v in self.__dict__.items() if k != "type" and v 
+                f"{k}={repr(v)}"
+                for k, v in self.__dict__.items() if k != "type" and v
             )
         ) + ")"
 
@@ -41,21 +44,21 @@ class AbstractEvent(Event):
     在使用事件时应使用类型 [Event]. 在实现自定义事件时应继承 [AbstractEvent]
     """
 
-    __intercepted: bool = False
-    __cancelled: bool = False
+    _intercepted: bool = False
+    _cancelled: bool = False
 
     @property
     def isIntercepted(self) -> bool:
-        return self.__intercepted
+        return self._intercepted
 
     @property
     def isCancelled(self):
-        return self.__cancelled
+        return self._cancelled
 
     def intercept(self) -> NoReturn:
         """拦截事件 不向低优先级监听器传播"""
-        self.__intercepted = True
+        self._intercepted = True
 
     def cancel(self) -> NoReturn:
         assert isinstance(self, CancellableEvent)
-        self.__cancelled = True
+        self._cancelled = True
