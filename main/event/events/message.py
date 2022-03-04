@@ -1,3 +1,6 @@
+from typing import Union
+
+from .. import AbstractEvent
 from .types import BotPassiveEvent, GroupEvent, FriendEvent, StrangerEvent
 from ...contact.contact import Contact
 from ...contact.friend import Friend
@@ -6,16 +9,20 @@ from ...contact.stranger import Stranger
 from ...contact.member import Member
 
 
-class MessageEvent(BotPassiveEvent):
+class MessageEvent(AbstractEvent, BotPassiveEvent):
     type: str
     sender: Contact
     messageChain: MessageChain
 
-    def __repr__(self) -> str:
-        return f"{self.__repr_name__}(sender={self.sender}, messageChain={self.messageChain})"
+    def getSubject(self):
+        return self.sender
 
-    def __str__(self) -> str:
-        return f"{self.__class__.__name__}(sender={self.sender}, messageChain={self.messageChain})"
+    # TODO: 单Element或Element List支持
+    async def reply(self, message: Union[MessageChain, str]):
+        pass
+
+    async def quoteReply(self, message: Union[MessageChain, str]):
+        pass
 
 
 class FriendMessage(MessageEvent, FriendEvent):
@@ -23,15 +30,36 @@ class FriendMessage(MessageEvent, FriendEvent):
     sender: Friend
     messageChain: MessageChain
 
+    async def reply(self, message: Union[MessageChain, str]):
+        return await self.sender.bot.sendFriendMessage(self.sender, message)
+
+    async def quoteReply(self, message: Union[MessageChain, str]):
+        from ...message.data.source import Source
+        return await self.sender.bot.sendFriendMessage(self.sender, message, self.messageChain.getFirst(Source))
+
 class GroupMessage(MessageEvent, GroupEvent):
     type: str = "GroupMessage"
     sender: Member
     messageChain: MessageChain
 
+    async def reply(self, message: Union[MessageChain, str]):
+        return await self.sender.bot.sendGroupMessage(self.sender.group, message)
+
+    async def quoteReply(self, message: Union[MessageChain, str]):
+        from ...message.data.source import Source
+        return await self.sender.bot.sendGroupMessage(self.sender.group, message, self.messageChain.getFirst(Source))
+
 class TempMessage(MessageEvent, GroupEvent):
     type: str = "TempMessage"
     sender: Member
     messageChain: MessageChain
+
+    async def reply(self, message: Union[MessageChain, str]):
+        return await self.sender.bot.sendTempMessage(self.sender, message, group=self.sender.group)
+
+    async def quoteReply(self, message: Union[MessageChain, str]):
+        from ...message.data.source import Source
+        return await self.sender.bot.sendTempMessage(self.sender, message, self.messageChain.getFirst(Source), self.sender.group)
 
 
 class StrangerMessage(MessageEvent, StrangerEvent):

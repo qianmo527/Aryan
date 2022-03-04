@@ -1,5 +1,6 @@
 """事件监听器"""
 import asyncio
+from asyncio import Lock
 from enum import Enum
 from typing import Dict, List, Type, Callable
 
@@ -53,7 +54,7 @@ class Listener:
     concurrencyKind: ConcurrencyKind
     priority: EventPriority
 
-    def __init__(self, priority: EventPriority=EventPriority.MONITOR,
+    def __init__(self, priority: EventPriority=EventPriority.NORMAL,
                  concurrencyKind: ConcurrencyKind=ConcurrencyKind.CONCURRENT):
         self.concurrencyKind = concurrencyKind
         self.priority = priority
@@ -68,6 +69,10 @@ class Listener:
 class ListenerRegistry:
     type: Type[Event]
     listener: Listener
+
+    def __init__(self, type: Type[Event], listener: Listener):
+        self.type = type
+        self.listener = listener
 
 
 class GlobalEventListeners(dict):
@@ -102,14 +107,17 @@ class Handler(Listener):
             return ListeningStatus.LISTENING
 
 
-def callAndRemoveIfRequired(event: Event):
+async def callAndRemoveIfRequired(event: Event):
     for p in EventPriority.prioritiesExcludedMonitor:
         container: List[ListenerRegistry] = GlobalEventListeners[p]
+        task_queue = []
         for registry in container:
             if event.isIntercepted: return
             if not isinstance(event, registry.type): continue
             listener = registry.listener
-            process(container, registry, listener, event)
+            task_queue.append(asyncio.create_task(process(container, registry, listener, event)))
+        for task in task_queue:
+            await task
 
     if event.isIntercepted: return
     container: List[ListenerRegistry] = GlobalEventListeners[EventPriority.MONITOR]
@@ -117,13 +125,16 @@ def callAndRemoveIfRequired(event: Event):
     if len(container) == 0: return
     elif len(container) == 1:
         registry: ListenerRegistry = container[0]
-        if not isinstance(registry.type, event): return
-        process(container, registry, registry.listener, event)
+        if not isinstance(event, registry.type): return
+        await process(container, registry, registry.listener, event)
     else:
+        task_queue = []
         for registry in container:
-            if not isinstance(registry.type, event): continue
-            process(container, registry, registry.listener, event)
+            if not isinstance(event, registry.type): continue
+            task_queue.append(asyncio.create_task(process(container, registry, registry.listener, event)))
+        await asyncio.wait(task_queue)
 
+lock = Lock()
 
 async def process(
     container: List[ListenerRegistry],
@@ -132,6 +143,9 @@ async def process(
     event: Event
 ):
     if listener.concurrencyKind == ConcurrencyKind.LOCKED:
-        pass
+        async with lock:
+            if await listener.onEvent(event) == ListeningStatus.STOPPED:
+                container.remove(registry)
     elif listener.concurrencyKind == ConcurrencyKind.CONCURRENT:
-        pass
+        if await listener.onEvent(event) == ListeningStatus.STOPPED:
+            container.remove(registry)

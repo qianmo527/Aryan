@@ -6,6 +6,17 @@ from .contact.friend import Friend
 from .contact.group import Group
 from .contact.member import Member, MemberPerm
 
+from .event.channel import GlobalEventChannel, EventChannel
+from .event.listener import (
+    Listener,
+    ListeningStatus,
+    ConcurrencyKind,
+    EventPriority,
+    GlobalEventListeners,
+    ListenerHostInterface,
+    SimpleListenerHost
+)
+
 from .event import Event, AbstractEvent, CancellableEvent
 from .event.events.bot import (
     BotOnlineEvent,

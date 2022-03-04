@@ -5,16 +5,16 @@ from datetime import datetime
 
 
 if TYPE_CHECKING:
-    from ...contact import Contact
+    from ...contact.contact import Contact
 
 
 class Message(BaseModel, metaclass=ABCMeta):
 
     class Config(BaseConfig):
         extra = Extra.allow
-        json_encoders = {
-            datetime: lambda v: v.timestamp()
-        }
+        # json_encoders = {
+        #     datetime: lambda v: v.timestamp()
+        # }
 
     @property
     def content(self) -> str:

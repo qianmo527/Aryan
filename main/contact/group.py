@@ -31,7 +31,7 @@ class Group(Contact):
     isBotMuted: bool = not botMuteRemaining == 0  # TODO: refresh & set after initialization
 
     @property
-    def avatarUrl() -> str:
+    def avatarUrl(self) -> str:
         return f"https://p.qlogo.cn/gh/{id}/{id}/640"
 
     def __repr__(self) -> str:

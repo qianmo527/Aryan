@@ -1,5 +1,5 @@
 from typing import NoReturn
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 from abc import ABCMeta, abstractmethod
 
 
@@ -15,6 +15,7 @@ class Event(BaseModel, metaclass=ABCMeta):
 
     class Config:
         arbitrary_types_allowed = True
+        extra = Extra.allow
 
     def __repr__(self) -> str:
         return self.__class__.__name__ + "(" + ", ".join(

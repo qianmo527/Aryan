@@ -1,21 +1,27 @@
 import asyncio
 from main import Mirai, MiraiSession, Bot, BotConfiguration
+from main import GlobalEventChannel, EventPriority, ConcurrencyKind, ListeningStatus
+from main import GroupMessage, FriendMessage
 
 
-Mirai(
-       MiraiSession(
-              verify_key="verifyKey",
-              host="localhost:8080",
-       ),
-       loop=asyncio.get_event_loop(),
-       bots=[
-              Bot(BotConfiguration(account=1375075223)),
-              Bot(BotConfiguration(account=552282813))
-       ]
-).launch_blocking()
+app = Mirai(
+    MiraiSession(
+        verify_key="verifyKey",
+        host="localhost:8080",
+    ),
+    loop=asyncio.get_event_loop(),
+    bots=[
+        Bot(BotConfiguration(account=1375075223)),
+        # Bot(BotConfiguration(account=552282813))
+    ]
+)
 
-app = Mirai.getIntance()
 
-# source = Source.parse_obj({'type': 'Source', 'id': 8728, 'time': 1643272815})
-# print(source)
-# MessageChain.deserializeMiraiCode("[mirai:atall]")
+async def main(event: FriendMessage):
+    # bot = app.getBot(1375075223)
+    # await app.sendFriendMessage(bot, event.sender, "hello")
+    await event.quoteReply("hello world")
+
+GlobalEventChannel.INSTANCE.subscribeAlways(FriendMessage, main)
+
+app.launch_blocking()

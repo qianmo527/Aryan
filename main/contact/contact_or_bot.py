@@ -26,7 +26,7 @@ class ContactOrBot(BaseModel, object):
     def __repr__(self) -> str:
         return self.__class__.__name__ + "(" + ", ".join(
             (
-               f"{k}={repr(v)}"
-                for k, v in self.__dict__.items() if k != "type" and v 
+                f"{k}={repr(v)}"
+                for k, v in self.__dict__.items() if k != "type" and v
             )
         ) + ")"

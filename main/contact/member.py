@@ -28,11 +28,6 @@ class Member(User):
     muteTimeRemaining: int
     group: "Group"
 
-    def __repr__(self) -> str:
-        return f"Member({self.id}, memberName={self.name}, specialTitle={self.specialTitle}, permission={self.permission} ,"\
-        f"joinTimestamp={self.joinTimestamp}, lastSpeakTimestamp={self.lastSpeakTimestamp}, muteTimeRemaining={self.muteTimeRemaining} ,"\
-        f"group={self.group})"
-
     def mute(self):
         pass
 

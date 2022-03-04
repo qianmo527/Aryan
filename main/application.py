@@ -2,7 +2,7 @@ import aiohttp
 from aiohttp import WSMsgType
 import asyncio
 import json
-from typing import TYPE_CHECKING, Optional, TypeVar, Generic, Dict, overload, List
+from typing import TYPE_CHECKING, Optional, TypeVar, Generic, Dict, overload, List, Optional, Union
 from loguru import logger
 import pickle
 
@@ -10,6 +10,11 @@ import pickle
 from .protocol import MiraiProtocol, MiraiSession
 from .event.events.bot import BotEvent
 from .event import Event
+from .message.data.chain import MessageChain
+from .message.data.source import Source
+from .contact.friend import Friend
+from .contact.group import Group
+from .contact.member import Member
 
 if TYPE_CHECKING:
     from .bot import Bot
@@ -49,12 +54,17 @@ class Mirai(MiraiProtocol):
                 yield from Mirai.all_event_generator(i)
 
     @staticmethod
-    def parse_event(obj: Dict):
+    def parse_event(obj: Dict, bot: "Bot"):
+        from .contact.contact_or_bot import ContactOrBot
         # TODO: http adapter message parse
         if "type" in obj and isinstance(obj, dict):
             for i in Mirai.all_event_generator():
                 if i.__name__ == obj["type"]:
-                    return i.parse_obj({k: v for k, v in obj.items() if k != "type"})
+                    event = i.parse_obj({k: v for k, v in obj.items() if k != "type"})
+                    for name, anno in event.__annotations__.items():
+                        if issubclass(anno, ContactOrBot):
+                            event.__getattribute__(name).bot = bot
+                    return event
 
     async def ws_all(self, bot: "Bot"):
         async with self.session.ws_connect(
@@ -68,29 +78,31 @@ class Mirai(MiraiProtocol):
                     if not bot.configuration.ws_session:
                         bot.configuration.ws_session = data["data"]["session"]
                     print(data)
-                    event = self.parse_event(data["data"])
+                    event = self.parse_event(data["data"], bot=bot)
                     if event:
                         self.log_formatter(event, bot)
+                        # TODO: Event.broadcast()
+                        from .event.channel import GlobalEventChannel
+                        await GlobalEventChannel.INSTANCE.broadcast(event)
                 elif ws_message.type == WSMsgType.CLOSED:
                     # self.logger.info("websocket connection has closed")
-                    # TODO: 倒计时等待重连 结束断开
                     ...
 
     def log_formatter(self, event: Event, bot: "Bot"):
         from .event.events.message import FriendMessage, GroupMessage, TempMessage
         if isinstance(event, FriendMessage):
             self.logger.info(
-                f"Bot.{bot.configuration.account}: {event.sender.nickname}({event.sender.id}) -> "\
+                f"Bot.{bot.configuration.account}: {event.sender.nickname}({event.sender.id}) -> "
                 f"{event.messageChain.serializeToMiraiCode()}"
             )
         elif isinstance(event, GroupMessage):
             self.logger.info(
-                f"Bot.{bot.configuration.account}: [{event.sender.group.name}({event.sender.group.id})] "\
+                f"Bot.{bot.configuration.account}: [{event.sender.group.name}({event.sender.group.id})] "
                 f"{event.sender.name}({event.sender.id}) -> {event.messageChain.serializeToMiraiCode()}"
             )
         elif isinstance(event, TempMessage):
             self.logger.info(
-                f"Bot.{bot.configuration.account}: [{event.sender.group.name}({event.sender.group.id})] "\
+                f"Bot.{bot.configuration.account}: [{event.sender.group.name}({event.sender.group.id})] "
                 f"{event.sender.name}(Temp {event.sender.id}) -> {event.messageChain.serializeToMiraiCode()}"
             )
         else:
@@ -105,7 +117,7 @@ class Mirai(MiraiProtocol):
                     await t
                 except asyncio.CancelledError:
                     pass
-        self.logger.info("aryan shutdowned")
+        self.logger.info("aryan shutdown")
 
     def __del__(self):
         self.loop.run_until_complete(self.shutdown())
@@ -135,6 +147,11 @@ class Mirai(MiraiProtocol):
         finally:
             self.loop.run_until_complete(self.shutdown())
 
+    def getBot(self, account: int):
+        for i in self.bots:
+            if i.configuration.account == account:
+                return i
+
     C = TypeVar("C", bound="Contact")
     async def getContactList(self, c: Generic[C], bot: "Bot"):
         from .contact.friend import Friend
@@ -146,7 +163,7 @@ class Mirai(MiraiProtocol):
 
     async def getAbout(self):
         async with self.session.get(
-            self.url_root(f"about")
+            self.url_root(f"about", self.bots[0])
         ) as response:
             response.raise_for_status()
             print(await response.json())
@@ -167,25 +184,91 @@ class Mirai(MiraiProtocol):
             response.raise_for_status()
             return [Group.parse_obj(obj) for obj in (await response.json())["data"]]
 
-    async def sendFriendMessage(self):
+    async def sendFriendMessage(self,
+        bot: "Bot",
+        target: Union[Friend, int],
+        message: Union[MessageChain, str],
+        quote: Optional[Union[Source, int]]=None
+    ):
+        # TODO: 支持传入单个Element
+        from .message.data.plain import Plain
         async with self.session.post(
-            self.url_root("sendFriendMessage"),
+            self.url_root("sendFriendMessage", bot),
             json={
-                "sessionKey": self.http_session or self.ws_session,
-                "target": 2816661524,
-                "messageChain": [{"type":"Plain", "text": "hello world"}]
+                "sessionKey": bot.configuration.http_session or bot.configuration.ws_session,
+                "target": target.id if isinstance(target, Friend) else target,
+                "messageChain": [i.json() for i in message.__root__] if isinstance(message, MessageChain)
+                                else [Plain(message).dict()],
+                "quote": quote.id if isinstance(quote, Source) else quote
             }
         ) as response:
             response.raise_for_status()
             print(await response.json())
 
-    async def sendGroupMessage(self):
+    async def sendGroupMessage(self,
+        bot: "Bot",
+        target: Union[Group, int],
+        message: Union[MessageChain, str],
+        quote: Optional[Union[Source, int]]=None
+    ):
+        # TODO: 支持传入单个Element
+        from .message.data.plain import Plain
         async with self.session.post(
-            self.url_root("sendGroupMessage"),
+            self.url_root("sendGroupMessage", bot),
             json={
-                "sessionKey": self.http_session,
-                "target": 954539214,
-                "messageChain": [{ "type":"Plain", "text":"hello " },{ "type":"Plain", "text":"world" }]
+                "sessionKey": bot.configuration.http_session or bot.configuration.ws_session,
+                "target": target.id if isinstance(target, Group) else target,
+                "messageChain": [i.json() for i in message.__root__] if isinstance(message, MessageChain)
+                                else [Plain(message).dict()],
+                "quote": quote.id if isinstance(quote, Source) else quote
+            }
+        ) as response:
+            response.raise_for_status()
+            print(await response.json())
+
+    async def sendTempMessage(self,
+        bot: "Bot",
+        target: Union[Member, int],
+        message: Union[MessageChain, str],
+        quote: Optional[Union[Source, int]]=None,
+        group: Optional[Group, int]=None
+    ):
+        # TODO: 支持传入单个Element
+        from .message.data.plain import Plain
+        async with self.session.post(
+            self.url_root("sendGroupMessage", bot),
+            json={
+                "sessionKey": bot.configuration.http_session or bot.configuration.ws_session,
+                "qq": target.id if isinstance(target, Member) else target,
+                "group": target.group.id if isinstance(target, Member) else
+                         group.id if group and isinstance(group, Group) else group,
+                "messageChain": [i.json() for i in message.__root__] if isinstance(message, MessageChain)
+                                else [Plain(message).dict()],
+                "quote": quote.id if isinstance(quote, Source) else quote
+            }
+        ) as response:
+            response.raise_for_status()
+            print(await response.json())
+
+    async def sendNudge(self): pass
+
+    async def recall(self, target: Union[Source, int], bot: "Bot"):
+        async with self.session.post(
+            self.url_root("recall", bot),
+            json={
+                "sessionKey": bot.configuration.http_session or bot.configuration.ws_session,
+                "target": target.id if isinstance(target, Source) else target
+            }
+        ) as response:
+            response.raise_for_status()
+            print(await response.json())
+
+    async def deleteFriend(self, target: Union[Friend, int], bot: "Bot"):
+        async with self.session.post(
+            self.url_root("deleteFriend", bot),
+            json={
+                "sessionKey": bot.configuration.http_session or bot.configuration.ws_session,
+                "target": target.id if isinstance(target, Friend) else target
             }
         ) as response:
             response.raise_for_status()

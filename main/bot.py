@@ -1,14 +1,17 @@
-from typing import Generic, List, TYPE_CHECKING, TypeVar
+from typing import Generic, List, TYPE_CHECKING, TypeVar, Optional, Union
 from dataclasses import dataclass, field
 
 from .protocol import MiraiSession
 from .contact.user_or_bot import UserOrBot
 from .contact.contact import Contact
+from .message.data.chain import MessageChain
+from .message.data.source import Source
 
 if TYPE_CHECKING:
     from .contact.group import Group
     from .contact.friend import Friend
     from .contact.stranger import Stranger
+    from .contact.member import Member
 from .application import Mirai
 from .event.channel import EventChannel
 
@@ -19,11 +22,15 @@ class BotConfiguration:
     http_session: str = field(default=None, init=False)
     ws_session: str = field(default=None, init=False)
 
+    def __repr__(self):
+        return f"BotConfiguration(account={self.account})"
+
 
 class Bot(UserOrBot):
+    # fixme: 给每个bot所属的contact适配
     configuration: BotConfiguration  # Bot配置
-    isOnline: bool = True # 当 Bot 在线 (可正常收发消息) 时返回 True
-    eventChannel: EventChannel = None # 来自这个 Bot 的 BotEvent 的事件通道  TODO pydantic创建时无法新建问题
+    isOnline: bool = True  # 当 Bot 在线 (可正常收发消息) 时返回 True
+    eventChannel: EventChannel = None # 来自这个 Bot 的 BotEvent 的事件通道
     otherClients: List = []  # 其他设备列表  还没写|不打算写 一般情况为空
     # asFriend: Friend # User.id 与 Bot.id 相同的 Friend 实例
     # asStranger: Stranger # User.id 与 Bot.id 相同的 Stranger 实例
@@ -36,8 +43,9 @@ class Bot(UserOrBot):
         super().__init__(
             id=configuration.account, configuration=configuration, asFriend=Friend(id=configuration.account),
             asStranger=Stranger(id=configuration.account), isOnline=True,
-            eventChannel=GlobalEventChannel.INSTANCE.filter(lambda event: event.bot==self)
+            eventChannel=GlobalEventChannel.INSTANCE#.filter(lambda event: event.bot==self)
         )
+        del self.bot
 
     async def init(self):
         """初始化Bot信息
@@ -101,5 +109,35 @@ class Bot(UserOrBot):
         if self.application:
             return await self.application.getGroupList(self)
 
-    def __repr_args__(self):
-        return [(None, self.configuration.account)]
+    async def sendFriendMessage(self,
+        target: Union["Friend", int],
+        message: Union[MessageChain, str],
+        quote: Optional[Union[Source, int]] = None
+    ):
+        return await self.application.sendFriendMessage(self, target, message, quote)
+
+    async def sendGroupMessage(self,
+        target: Union["Group", int],
+        message: Union[MessageChain, str],
+        quote: Optional[Union[Source, int]] = None
+    ):
+        return await self.application.sendGroupMessage(self, target, message, quote)
+
+    async def sendTempMessage(self,
+        target: Union["Member", int],
+        message: Union[MessageChain, str],
+        quote: Optional[Union[Source, int]] = None,
+        group: Optional[Group] = None
+    ):
+        return await self.application.sendTempMessage(self, target, message, quote, group)
+
+    async def sendNudge(self): pass
+
+    async def recall(self, target: Union[Source, int]):
+        return await self.application.recall(target)
+
+    async def deleteFriend(self, target: Union["Friend", int]):
+        return await self.application.deleteFriend(target)
+
+    def __repr__(self):
+        return f"Bot({self.configuration.account})"

@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING, Sequence
+from typing import List, TYPE_CHECKING, Sequence, Type
 
 
 from .message import Message
@@ -37,6 +37,12 @@ class MessageChain(CodableMessage, Message):
     def __init__(self, __root__):
         super().__init__(__root__=self.build_chain(__root__))
 
+    def get(self, element: Type["SingleMessage"]) -> List["SingleMessage"]:
+        return [i for i in self.__root__ if isinstance(i, element)]
+
+    def getFirst(self, element: Type["SingleMessage"]) -> "SingleMessage":
+        return self.get(element)[0]
+
     def serializeToMiraiCode(self) -> str:
         """将 [MessageChain] 转换为 "mirai码" 表示的字符串\n
         为保证可逆，将 [Plain] 中的 "[" 用 "[_" 代替
@@ -58,8 +64,8 @@ class MessageChain(CodableMessage, Message):
     def __str__(self) -> str:
         return f"MessageChain({self.__root__})"
 
-    def has(self, element):
-        return self.__contains__(element)
+    def has(self, type: "SingleMessage"):
+        return self.__contains__(type)
 
     def __contains__(self, obj_type: object) -> bool:
         return obj_type in [type(i) for i in self.__root__]
