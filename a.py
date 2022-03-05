@@ -24,4 +24,6 @@ async def main(event: FriendMessage):
 
 GlobalEventChannel.INSTANCE.subscribeAlways(FriendMessage, main)
 
+GlobalEventChannel.INSTANCE.subscribeAlways(GroupMessage, lambda event: event.quoteReply("我爱你"))
+
 app.launch_blocking()

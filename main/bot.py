@@ -127,7 +127,7 @@ class Bot(UserOrBot):
         target: Union["Member", int],
         message: Union[MessageChain, str],
         quote: Optional[Union[Source, int]] = None,
-        group: Optional[Group] = None
+        group: Optional[Union["Group", int]] = None
     ):
         return await self.application.sendTempMessage(self, target, message, quote, group)
 

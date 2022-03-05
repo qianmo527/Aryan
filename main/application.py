@@ -231,7 +231,7 @@ class Mirai(MiraiProtocol):
         target: Union[Member, int],
         message: Union[MessageChain, str],
         quote: Optional[Union[Source, int]]=None,
-        group: Optional[Group, int]=None
+        group: Optional[Union[Group, int]]=None
     ):
         # TODO: 支持传入单个Element
         from .message.data.plain import Plain
