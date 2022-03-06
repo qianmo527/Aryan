@@ -1,24 +1,20 @@
-import aiohttp
 from aiohttp import WSMsgType
 import asyncio
 import json
-from typing import TYPE_CHECKING, Optional, TypeVar, Generic, Dict, overload, List, Optional, Union
+from typing import TYPE_CHECKING, TypeVar, Generic, Dict, List, Optional, Union
 from loguru import logger
-import pickle
-
 
 from .protocol import MiraiProtocol, MiraiSession
-from .event.events.bot import BotEvent
 from .event import Event
 from .message.data.chain import MessageChain
 from .message.data.source import Source
+from .message.data.image import Image, UploadMethod
 from .contact.friend import Friend
 from .contact.group import Group
 from .contact.member import Member
 
 if TYPE_CHECKING:
     from .bot import Bot
-    from .contact.contact import Contact
 
 
 class Mirai(MiraiProtocol):
@@ -47,7 +43,9 @@ class Mirai(MiraiProtocol):
         return "{}://{}/{}".format("ws" if bot.configuration.ws_session else "http", self.connect_info.host, path)
 
     @staticmethod
-    def all_event_generator(base=BotEvent):
+    def all_event_generator(base=None):
+        from .event.events.types import BotEvent
+        if not base: base = BotEvent
         for i in base.__subclasses__():
             yield i
             if i.__subclasses__():
@@ -56,7 +54,7 @@ class Mirai(MiraiProtocol):
     @staticmethod
     def parse_event(obj: Dict, bot: "Bot"):
         from .contact.contact_or_bot import ContactOrBot
-        # TODO: http adapter message parse
+        from .event.events.types import BotEvent
         if "type" in obj and isinstance(obj, dict):
             for i in Mirai.all_event_generator():
                 if i.__name__ == obj["type"]:
@@ -64,6 +62,8 @@ class Mirai(MiraiProtocol):
                     for name, anno in event.__annotations__.items():
                         if issubclass(anno, ContactOrBot):
                             event.__getattribute__(name).bot = bot
+                    if isinstance(event, BotEvent):
+                        event.bot = bot
                     return event
 
     async def ws_all(self, bot: "Bot"):
@@ -81,9 +81,7 @@ class Mirai(MiraiProtocol):
                     event = self.parse_event(data["data"], bot=bot)
                     if event:
                         self.log_formatter(event, bot)
-                        # TODO: Event.broadcast()
-                        from .event.channel import GlobalEventChannel
-                        await GlobalEventChannel.INSTANCE.broadcast(event)
+                        await event.broadcast()
                 elif ws_message.type == WSMsgType.CLOSED:
                     # self.logger.info("websocket connection has closed")
                     ...
@@ -134,7 +132,6 @@ class Mirai(MiraiProtocol):
         from .contact.group import Group
         from .contact.member import Member
         from .bot import Bot
-        # TODO: 将所有所属Bot适配
         ContactOrBot.update_forward_refs(Bot=Bot)
         Group.update_forward_refs(Bot=Bot)
         Member.update_forward_refs(Bot=Bot, Group=Group)
@@ -190,7 +187,7 @@ class Mirai(MiraiProtocol):
         message: Union[MessageChain, str],
         quote: Optional[Union[Source, int]]=None
     ):
-        # TODO: 支持传入单个Element
+        # TODO: 支持传入单个Element或List[Element]
         from .message.data.plain import Plain
         async with self.session.post(
             self.url_root("sendFriendMessage", bot),
@@ -218,7 +215,7 @@ class Mirai(MiraiProtocol):
             json={
                 "sessionKey": bot.configuration.http_session or bot.configuration.ws_session,
                 "target": target.id if isinstance(target, Group) else target,
-                "messageChain": [i.json() for i in message.__root__] if isinstance(message, MessageChain)
+                "messageChain": [i.dict() for i in message.__root__] if isinstance(message, MessageChain)
                                 else [Plain(message).dict()],
                 "quote": quote.id if isinstance(quote, Source) else quote
             }
@@ -273,3 +270,15 @@ class Mirai(MiraiProtocol):
         ) as response:
             response.raise_for_status()
             print(await response.json())
+
+    async def uploadImage(self, data: bytes, method: UploadMethod, bot: "Bot") -> Image:
+        async with self.session.post(
+            self.url_root("uploadImage", bot),
+            data={
+                "sessionKey": bot.configuration.http_session or bot.configuration.ws_session,
+                "type": method.value,
+                "img": data
+            }
+        ) as response:
+            response.raise_for_status()
+            return Image.parse_obj(await response.json())

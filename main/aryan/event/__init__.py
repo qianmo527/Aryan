@@ -13,6 +13,8 @@ class Event(BaseModel, metaclass=ABCMeta):
 
     def intercept(self) -> NoReturn: pass
 
+    async def broadcast(self): pass
+
     class Config:
         arbitrary_types_allowed = True
         extra = Extra.allow
@@ -63,3 +65,7 @@ class AbstractEvent(Event):
     def cancel(self) -> NoReturn:
         assert isinstance(self, CancellableEvent)
         self._cancelled = True
+
+    async def broadcast(self):
+        from .channel import GlobalEventChannel
+        return await GlobalEventChannel.INSTANCE.broadcast(self)

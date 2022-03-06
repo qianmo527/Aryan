@@ -26,7 +26,7 @@ class Group(Contact):
     botMuteRemaining: int = 0
     permission: MemberPerm
     # owner: Member
-    members: List[Member] = [] # TODO ContactList[NormalMember]
+    members: List[Member] = []  # TODO ContactList[NormalMember]
     announcements: str = None  # TODO
     isBotMuted: bool = not botMuteRemaining == 0  # TODO: refresh & set after initialization
 

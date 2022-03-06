@@ -6,6 +6,7 @@ from .contact.user_or_bot import UserOrBot
 from .contact.contact import Contact
 from .message.data.chain import MessageChain
 from .message.data.source import Source
+from .message.data.image import Image, UploadMethod
 
 if TYPE_CHECKING:
     from .contact.group import Group
@@ -27,7 +28,6 @@ class BotConfiguration:
 
 
 class Bot(UserOrBot):
-    # fixme: 给每个bot所属的contact适配
     configuration: BotConfiguration  # Bot配置
     isOnline: bool = True  # 当 Bot 在线 (可正常收发消息) 时返回 True
     eventChannel: EventChannel = None # 来自这个 Bot 的 BotEvent 的事件通道
@@ -43,7 +43,7 @@ class Bot(UserOrBot):
         super().__init__(
             id=configuration.account, configuration=configuration, asFriend=Friend(id=configuration.account),
             asStranger=Stranger(id=configuration.account), isOnline=True,
-            eventChannel=GlobalEventChannel.INSTANCE#.filter(lambda event: event.bot==self)
+            eventChannel=GlobalEventChannel.INSTANCE.filter(lambda event: event.bot.id==self.id)
         )
         del self.bot
 
@@ -138,6 +138,9 @@ class Bot(UserOrBot):
 
     async def deleteFriend(self, target: Union["Friend", int]):
         return await self.application.deleteFriend(target)
+
+    async def uploadImage(self, data: bytes, method: UploadMethod) -> Image:
+        return await self.application.uploadImage(data, method, self)
 
     def __repr__(self):
         return f"Bot({self.configuration.account})"

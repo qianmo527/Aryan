@@ -1,7 +1,9 @@
 import asyncio
-from main import Mirai, MiraiSession, Bot, BotConfiguration
-from main import GlobalEventChannel, EventPriority, ConcurrencyKind, ListeningStatus
-from main import GroupMessage, FriendMessage
+from main.aryan import Mirai, MiraiSession, Bot, BotConfiguration
+from main.aryan import GlobalEventChannel, EventPriority, ConcurrencyKind, ListeningStatus
+from main.aryan import GroupMessage, FriendMessage
+from main.aryan import BotEvent
+
 
 
 app = Mirai(
@@ -17,13 +19,13 @@ app = Mirai(
 )
 
 
-async def main(event: FriendMessage):
-    # bot = app.getBot(1375075223)
-    # await app.sendFriendMessage(bot, event.sender, "hello")
-    await event.quoteReply("hello world")
+async def main(event: GroupMessage):
+    print("listener received event:", event.__class__.__name__)
+    print(event.bot)
 
-GlobalEventChannel.INSTANCE.subscribeAlways(FriendMessage, main)
+GlobalEventChannel.INSTANCE.filter(lambda event: isinstance(event, BotEvent)).subscribeAlways(GroupMessage, main)
 
-GlobalEventChannel.INSTANCE.subscribeAlways(GroupMessage, lambda event: event.quoteReply("我爱你"))
-
-app.launch_blocking()
+try:
+    app.launch_blocking()
+except KeyboardInterrupt:
+    pass

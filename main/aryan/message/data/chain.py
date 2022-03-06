@@ -18,16 +18,22 @@ class MessageChain(CodableMessage, Message):
     @staticmethod
     def build_chain(obj):
         from .single_message import MessageMetadata, MessageContent
-        elements = []
+        from .plain import Plain
+        elements: List[SingleMessage] = []
         for i in obj:
-            for ii in MessageMetadata.__subclasses__():
-                if i["type"] == ii.__name__:
-                    elements.append(ii.parse_obj(i))
-                    break
-            for ii in MessageContent.__subclasses__():
-                if i["type"] == ii.__name__:
-                    elements.append(ii.parse_obj(i))
-                    break
+            if isinstance(i, SingleMessage):
+                elements.append(i)
+            elif isinstance(i, dict) and "type" in i:
+                for ii in MessageMetadata.__subclasses__():
+                    if i["type"] == ii.__name__:
+                        elements.append(ii.parse_obj(i))
+                        break
+                for ii in MessageContent.__subclasses__():
+                    if i["type"] == ii.__name__:
+                        elements.append(ii.parse_obj(i))
+                        break
+            elif isinstance(i, str):
+                elements.append(Plain(i))
         return elements
 
     @classmethod
@@ -41,7 +47,8 @@ class MessageChain(CodableMessage, Message):
         return [i for i in self.__root__ if isinstance(i, element)]
 
     def getFirst(self, element: Type["SingleMessage"]) -> "SingleMessage":
-        return self.get(element)[0]
+        _list = self.get(element)
+        return _list[0] if _list else None
 
     def serializeToMiraiCode(self) -> str:
         """将 [MessageChain] 转换为 "mirai码" 表示的字符串\n

@@ -1,16 +1,16 @@
 [tool.poetry]
 name = "aryan"
-version = "0.1.0"
-description = ""
+version = "0.0.3.post1"
+description = "A small package"
 authors = ["qianmo527 <2816661524@qq.com>"]
+readme = "README.md"
+packages = [{ include = "aryan", from = "main" }]
 
 [tool.poetry.dependencies]
 python = "^3.9"
 pydantic = "^1.9.0"
 aiohttp = "^3.8.1"
 loguru = "^0.5.3"
-click = "^8.0.3"
-graia-broadcast = "^0.15.6"
 
 [tool.poetry.dev-dependencies]
 

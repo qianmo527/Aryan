@@ -1,10 +1,12 @@
 from ...event import Event
+from ...bot import Bot
 
 
 class BotEvent(Event):
-    type: str
     """有关 [Bot] 的事件
     """
+    type: str
+    bot: Bot = None
 
 class BotPassiveEvent(BotEvent):
     # type: str

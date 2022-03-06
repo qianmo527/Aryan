@@ -1,5 +1,4 @@
-from .application import Mirai
-from .protocol import MiraiSession
+from .application import Mirai, MiraiSession
 from .bot import Bot, BotConfiguration
 
 from .contact.friend import Friend
@@ -17,15 +16,6 @@ from .event.listener import (
     SimpleListenerHost
 )
 
-from .event import Event, AbstractEvent, CancellableEvent
-from .event.events.bot import (
-    BotOnlineEvent,
-    BotOfflineEvent,
-    BotOfflineEventActive,
-    BotOfflineEventForce,
-    BotOfflineEventDropped,
-    BotReloginEvent
-)
 from .event.events.friend import (
     FriendInputStatusChangedEvent,
     FriendNickChangedEvent,
@@ -56,13 +46,6 @@ from .event.events.group import (
     MemberUnmuteEvent,
     MemberHonorChangeEvent
 )
-from .event.events.message import (
-    MessageEvent,
-    FriendMessage,
-    GroupMessage,
-    TempMessage,
-    StrangerMessage
-)
 from .event.events.nudge_event import NudgeEvent
 from .event.events.types import (
     BotEvent,
@@ -76,13 +59,22 @@ from .event.events.types import (
     GroupMemberEvent,
     GroupMemberInfoChangeEvent
 )
+from .event.events.message import (
+    MessageEvent,
+    FriendMessage,
+    GroupMessage,
+    TempMessage
+)
 
 from .message.message_receipt import MessageReceipt
 from .message.code.codable import CodableMessage
 from .message.code.mirai_code import MiraiCode
+from .message.data.single_message import SingleMessage, MessageContent, MessageMetadata
 from .message.data.at import At, AtAll
 from .message.data.chain import MessageChain
 from .message.data.message import Message
 from .message.data.plain import Plain
-from .message.data.single_message import SingleMessage, MessageContent, MessageMetadata
 from .message.data.source import Source
+from .message.data.quote import Quote
+from .message.data.face import Face
+from .message.data.image import Image, UploadMethod
