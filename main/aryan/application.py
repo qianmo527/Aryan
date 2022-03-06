@@ -91,17 +91,17 @@ class Mirai(MiraiProtocol):
         if isinstance(event, FriendMessage):
             self.logger.info(
                 f"Bot.{bot.configuration.account}: {event.sender.nickname}({event.sender.id}) -> "
-                f"{event.messageChain.serializeToMiraiCode()}"
+                f"{event.messageChain.display()}"
             )
         elif isinstance(event, GroupMessage):
             self.logger.info(
                 f"Bot.{bot.configuration.account}: [{event.sender.group.name}({event.sender.group.id})] "
-                f"{event.sender.name}({event.sender.id}) -> {event.messageChain.serializeToMiraiCode()}"
+                f"{event.sender.name}({event.sender.id}) -> {event.messageChain.display()}"
             )
         elif isinstance(event, TempMessage):
             self.logger.info(
                 f"Bot.{bot.configuration.account}: [{event.sender.group.name}({event.sender.group.id})] "
-                f"{event.sender.name}(Temp {event.sender.id}) -> {event.messageChain.serializeToMiraiCode()}"
+                f"{event.sender.name}(Temp {event.sender.id}) -> {event.messageChain.display()}"
             )
         else:
             self.logger.info(f"Bot.{bot.configuration.account}: Event: {event.__repr__()}")

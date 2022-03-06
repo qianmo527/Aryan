@@ -3,7 +3,7 @@ from ..code.codable import CodableMessage
 from .chain import MessageChain
 
 
-class Quote(MessageMetadata, CodableMessage):
+class Quote(MessageMetadata):
     type: str = "Quote"
     id: int
     senderId: int
@@ -12,9 +12,6 @@ class Quote(MessageMetadata, CodableMessage):
     origin: MessageChain
 
     def contentToString(self) -> str:
-        return f"[mirai:quote:[{self.id}]]"
-
-    def serializeToMiraiCode(self) -> str:
         return f"[mirai:quote:[{self.id}]]"
 
     def equals(self, other) -> bool:

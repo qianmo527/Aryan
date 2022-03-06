@@ -21,7 +21,6 @@ app = Mirai(
 
 async def main(event: GroupMessage):
     print("listener received event:", event.__class__.__name__)
-    print(event.bot)
 
 GlobalEventChannel.INSTANCE.filter(lambda event: isinstance(event, BotEvent)).subscribeAlways(GroupMessage, main)
 

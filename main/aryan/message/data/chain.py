@@ -57,6 +57,10 @@ class MessageChain(CodableMessage, Message):
         from ..code.codable import CodableMessage
         return "".join([i.serializeToMiraiCode() for i in self.__root__ if isinstance(i, CodableMessage)])
 
+    def display(self) -> str:
+        from ..code.codable import CodableMessage
+        return "".join([i.serializeToMiraiCode() if isinstance(i, CodableMessage) else i.contentToString() for i in self.__root__])
+
     def contentToString(self) -> str:
         return "".join([i.contentToString() for i in self.__root__])
 

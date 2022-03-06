@@ -20,7 +20,7 @@ class Message(BaseModel, metaclass=ABCMeta):
     def content(self) -> str:
         return self.contentToString()
 
-    # @abstractmethod  TODO
+    @abstractmethod
     def contentToString(self) -> str: ...
 
     def contentEquals(self, another: "Message", ignore_case: bool=False, strict: bool=False) -> bool:
