@@ -1,6 +1,8 @@
 """事件通道实现"""
-from typing import List, Type, Callable, Any
+import asyncio
+from typing import List, Type, Callable, Any, Optional
 from loguru import logger
+from functools import partial
 
 from . import Event, AbstractEvent
 from .listener import (Listener, ListeningStatus, ConcurrencyKind, EventPriority, Handler, callAndRemoveIfRequired,
@@ -26,17 +28,45 @@ class EventChannel:
                     return await func(ev)
                 else:
                     return ListeningStatus.LISTENING
+
             return parent.intercepted(listener_object)
 
         channel.intercepted = wrapper
         return channel
 
+    def filterIsInstance(self, event: Type[Event]): pass
+
     @staticmethod
     async def broadcast(event: Event):
         assert isinstance(event, AbstractEvent)
         event._intercepted = False
-        await callAndRemoveIfRequired(event)
-        return event
+        asyncio.get_running_loop().create_task(callAndRemoveIfRequired(event))  # fixme
+
+    async def nextEvent(self,
+                        event: Type[Event],
+                        timeout: float = 0,
+                        priority: EventPriority = EventPriority.NORMAL,
+                        filter: Optional[Callable[[Event], bool]] = None
+                        ):
+        """挂起当前协程 并等待从channel中获取指定类型的事件
+        Args:
+            event: 想要获取的事件类型
+            priority: 事件优先级 见 [EventPriority]
+            timeout: 目标超时
+            filter: 临时的过滤器 将不会修改原channel
+        """
+        future = asyncio.get_running_loop().create_future()
+
+        async def inside_listener(outer_future, ev: Event):
+            outer_future.set_result(ev)
+            print(ev)
+
+        channel = self.filter(filter) if filter else self
+        channel.subscribeOnce(event, partial(inside_listener, future), priority)
+
+        if timeout:
+            return await asyncio.wait_for(future, timeout)
+        return await future
 
     def registerListenerHost(self, listenerHost):
         pass

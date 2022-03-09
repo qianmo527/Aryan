@@ -7,7 +7,7 @@ from ..code.codable import CodableMessage
 class UploadMethod(Enum):
     Friend = "friend"
     Group = "group"
-    temp = "temp"
+    Temp = "temp"
 
 
 

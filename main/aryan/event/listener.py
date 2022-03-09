@@ -78,10 +78,10 @@ class ListenerRegistry:
 class GlobalEventListeners(dict):
     def __init__(self):
         super().__init__({priority: [] for priority in EventPriority})
-GlobalEventListeners = GlobalEventListeners()  # 确保只存在单一实例 可用INSTANCE代替
+GlobalEventListeners = GlobalEventListeners()
 
 
-class ListenerHostInterface:  # TODO: 把这个骚里骚气的东西写了谢谢 | 强大的扩展性
+class ListenerHostInterface:  # TODO: 强大的扩展性
 
     def EventHandler(self): pass  # annotation
 class SimpleListenerHost(ListenerHostInterface):
@@ -131,7 +131,7 @@ async def callAndRemoveIfRequired(event: Event):
         task_queue = []
         for registry in container:
             if not isinstance(event, registry.type): continue
-            task_queue.append(asyncio.create_task(process(container, registry, registry.listener, event)))
+            task_queue.append(asyncio.get_running_loop().create_task(process(container, registry, registry.listener, event)))
         await asyncio.wait(task_queue)
 
 lock = Lock()

@@ -15,6 +15,7 @@ from .contact.member import Member
 
 if TYPE_CHECKING:
     from .bot import Bot
+    from .contact.contact import Contact
 
 
 class Mirai(MiraiProtocol):
@@ -27,7 +28,7 @@ class Mirai(MiraiProtocol):
 
     def __init__(self, session: MiraiSession, loop: Optional[asyncio.AbstractEventLoop]=None, bots: List["Bot"]=[]):
         super().__init__(connect_info=session, bots=bots)
-        self.loop = loop or asyncio.get_event_loop()
+        self.loop = loop or asyncio.new_event_loop()
         Mirai.__instance = self
         for bot in bots:
             bot.application = self
@@ -139,8 +140,6 @@ class Mirai(MiraiProtocol):
     def launch_blocking(self):
         try:
             self.loop.run_until_complete(self.lifecycle())
-        except KeyboardInterrupt:
-            raise
         finally:
             self.loop.run_until_complete(self.shutdown())
 
