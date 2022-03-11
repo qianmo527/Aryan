@@ -1,6 +1,7 @@
 """事件通道实现"""
 import asyncio
-from typing import List, Type, Callable, Any, Optional
+import re
+from typing import List, Type, Callable, Any, Optional, Dict, Union
 from loguru import logger
 from functools import partial
 
@@ -10,18 +11,21 @@ from .listener import (Listener, ListeningStatus, ConcurrencyKind, EventPriority
 
 
 class EventChannel:
+    baseEventClass: Type[Event]
+
+    def __init__(self, baseEventClass: Type[Event]=Event) -> None:
+        self.baseEventClass = baseEventClass
 
     def filter(self, filter: Callable[[Event], bool]):
         assert isinstance(filter, Callable)
         parent: "EventChannel" = self
-        channel = EventChannel()
+        channel = EventChannel(self.baseEventClass)
 
-        def wrapper(func: Callable):
+        def overrided_intercepted(func: Callable):
             async def listener_object(ev):
                 filterResult: bool = False
                 try:
-                    baseEventClass = Event  # todo
-                    filterResult = isinstance(ev, baseEventClass) and filter(ev)
+                    filterResult = isinstance(ev, self.baseEventClass) and filter(ev)
                 except Exception as e:
                     logger.warning(f"channel filter caught an exception: {e}")
                 if filterResult:
@@ -31,10 +35,11 @@ class EventChannel:
 
             return parent.intercepted(listener_object)
 
-        channel.intercepted = wrapper
+        channel.intercepted = overrided_intercepted
         return channel
 
-    def filterIsInstance(self, event: Type[Event]): pass
+    def filterIsInstance(self, event: Type[Event]):
+        return self.filter(lambda ev: isinstance(ev, event))
 
     @staticmethod
     async def broadcast(event: Event):
@@ -44,7 +49,7 @@ class EventChannel:
 
     async def nextEvent(self,
                         event: Type[Event],
-                        timeout: float = 0,
+                        timeout: float = None,
                         priority: EventPriority = EventPriority.NORMAL,
                         filter: Optional[Callable[[Event], bool]] = None
                         ):
@@ -59,7 +64,6 @@ class EventChannel:
 
         async def inside_listener(outer_future, ev: Event):
             outer_future.set_result(ev)
-            print(ev)
 
         channel = self.filter(filter) if filter else self
         channel.subscribeOnce(event, partial(inside_listener, future), priority)
@@ -68,8 +72,18 @@ class EventChannel:
             return await asyncio.wait_for(future, timeout)
         return await future
 
+
+    def selectMessage(self, selector: Dict[str, Union[str, Callable]]):
+        from .events.message import MessageEvent
+        for k, v in selector.items():
+            async def listener(ev):
+                pass
+            GlobalEventChannel.INSTANCE.subscribe(MessageEvent, listener, concurrencyKind=ConcurrencyKind.CONCURRENT)
+
+
     def registerListenerHost(self, listenerHost):
         pass
+
 
     def subscribe(self,
                   event: Type[Event],
@@ -95,13 +109,14 @@ class EventChannel:
     def subscribeOnce(self,
                       event: Type[Event],
                       handler: Callable,
-                      priority: EventPriority = EventPriority.NORMAL
+                      priority: EventPriority = EventPriority.NORMAL,
+                      concurrencyKind: ConcurrencyKind = ConcurrencyKind.CONCURRENT
                       ) -> Listener:
         async def wrapper(received_event):
-            await handler(received_event)
+            asyncio.create_task(handler(received_event))
             return ListeningStatus.STOPPED
 
-        return self.subscribeInternal(event, self.createListener(wrapper, ConcurrencyKind.LOCKED, priority))
+        return self.subscribeInternal(event, self.createListener(wrapper, concurrencyKind, priority))
 
     # region impl
 

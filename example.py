@@ -1,8 +1,8 @@
 import asyncio
 from main.aryan import Mirai, MiraiSession, Bot, BotConfiguration
 from main.aryan import GlobalEventChannel, EventPriority, ConcurrencyKind, ListeningStatus
-from main.aryan import GroupMessage, FriendMessage
-from main.aryan import BotEvent
+from main.aryan import GroupMessage, FriendMessage, MessageEvent
+from main.aryan import BotEvent, FriendInputStatusChangedEvent
 
 
 
@@ -26,7 +26,12 @@ async def main(event: GroupMessage):
     next_event: FriendMessage = await event.bot.eventChannel.nextEvent(FriendMessage)
     await next_event.reply("True")
 
-GlobalEventChannel.INSTANCE.filter(lambda event: isinstance(event, BotEvent)).subscribeAlways(GroupMessage, main)
+# GlobalEventChannel.INSTANCE.filterIsInstance(BotEvent).subscribeOnce(FriendInputStatusChangedEvent, main)
+
+GlobalEventChannel.INSTANCE.selectMessage({
+    "hello": "hello world",
+    "test": lambda ev: ev.reply("test")
+})
 
 try:
     app.launch_blocking()
