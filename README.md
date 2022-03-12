@@ -22,23 +22,27 @@ from aryan import GroupMessage, GlobalEventChannel
 
 app = Mirai(
     MiraiSession(
-        verify_key="verifyKey",
-        host="localhost:8080",
+        verify_key="verifyKey",  # 配置mirai-api-http时保存的verifyKey
+        host="localhost:8080",  # mah存在的地址
     ),
-    loop=asyncio.get_event_loop(),
+    loop=asyncio.new_event_loop(),
     bots=[
         Bot(BotConfiguration(account=...)),
         Bot(BotConfiguration(account=...))
     ]
 )
 
+
 async def main(event: GroupMessage):
     print("received event:", type(event))
+
 
 GlobalEventChannel.INSTANCE.subscribeAlways(GroupMessage, main)
 
 app.launch_blocking()
 ```
+
+查看更多用法可以参考[这里](https://github.com/qianmo527/Aryan/blob/master/example.py)
 
 如果在使用本项目中遇到任何问题，请不要生气，不要砸电脑，可以友好的提个issue或者加入qq交流群~~喷项目~~交流
 

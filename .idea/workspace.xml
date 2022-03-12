@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="a10a7c6b-c1d7-4b09-98ab-5ad77f2c9c66" name="Changes" comment="完善事件系统框架">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/aryan.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/Planet.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/example.py" beforeDir="false" afterPath="$PROJECT_DIR$/example.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/application.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/application.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/bot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/contact/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/contact/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/contact/anonymous_member.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/contact/anonymous_member.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/contact/contact.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/contact/contact.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/contact/contact_list.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/contact/contact_list.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/contact/contact_or_bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/contact/contact_or_bot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/contact/friend.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/contact/friend.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/contact/group.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/contact/group.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/contact/member.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/contact/member.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/contact/normal_member.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/contact/normal_member.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/contact/stranger.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/contact/stranger.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/contact/user.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/contact/user.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/contact/user_or_bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/contact/user_or_bot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/event/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/event/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/event/channel.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/event/channel.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/event/events/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/event/events/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/event/events/bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/event/events/bot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/event/events/friend.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/event/events/friend.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/event/events/group.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/event/events/group.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/event/events/message.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/event/events/message.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/event/events/nudge_event.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/event/events/nudge_event.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/event/events/types.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/event/events/types.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/event/listener.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/event/listener.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/code/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/code/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/code/codable.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/code/codable.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/code/mirai_code.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/code/mirai_code.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/data/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/data/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/data/at.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/data/at.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/data/chain.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/data/chain.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/data/contrain_single.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/data/contrain_single.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/data/face.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/data/face.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/data/image.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/data/image.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/data/message.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/data/message.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/data/plain.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/data/plain.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/data/quote.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/data/quote.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/data/single_message.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/data/single_message.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/data/source.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/data/source.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/message/message_receipt.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/message/message_receipt.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/aryan/protocol.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/aryan/protocol.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="PREVIOUS_COMMIT_AUTHORS">
+      <list>
+        <option value="qianmo &lt;2816661524@qq.com&gt;" />
+      </list>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="25bTaltyKcXzTFE872FexbbOrk1" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="preferences.fileTypes" />
+  </component>
+  <component name="PyConsoleOptionsProvider">
+    <option name="myPythonConsoleState">
+      <console-settings module-name="aryan" is-module-sdk="true">
+        <option name="myUseModuleSdk" value="true" />
+        <option name="myModuleName" value="aryan" />
+      </console-settings>
+    </option>
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="E:\aryan" />
+      <recent name="E:\aryan\main\aryan" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.example">
+    <configuration name="a" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="aryan" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/a.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="example" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="aryan" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/example.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="aryan" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.example" />
+        <item itemvalue="Python.a" />
+        <item itemvalue="Python.test" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="a10a7c6b-c1d7-4b09-98ab-5ad77f2c9c66" name="Changes" comment="" />
+      <created>1645794860363</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1645794860363</updated>
+    </task>
+    <task id="LOCAL-00001" summary="完善事件系统框架">
+      <created>1645867496425</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1645867496425</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="完善事件系统框架" />
+    <option name="LAST_COMMIT_MESSAGE" value="完善事件系统框架" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/example.py</url>
+          <line>29</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

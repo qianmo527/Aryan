@@ -20,6 +20,8 @@ class MessageChain(CodableMessage, Message):
         from .single_message import MessageMetadata, MessageContent
         from .plain import Plain
         elements: List[SingleMessage] = []
+        if isinstance(obj, MessageContent):
+            return [obj]
         for i in obj:
             if isinstance(i, SingleMessage):
                 elements.append(i)
@@ -60,6 +62,9 @@ class MessageChain(CodableMessage, Message):
     def display(self) -> str:
         from ..code.codable import CodableMessage
         return "".join([i.serializeToMiraiCode() if isinstance(i, CodableMessage) else i.contentToString() for i in self.__root__])
+
+    def contentToString(self) -> str:
+        return "".join([i.contentToString() for i in self.__root__])
 
     def contentToString(self) -> str:
         return "".join([i.contentToString() for i in self.__root__])

@@ -27,8 +27,7 @@ class Mirai(MiraiProtocol):
     bots: List["Bot"] = []
 
     def __init__(self, session: MiraiSession, loop: Optional[asyncio.AbstractEventLoop]=None, bots: List["Bot"]=[]):
-        super().__init__(connect_info=session, bots=bots)
-        self.loop = loop or asyncio.new_event_loop()
+        super().__init__(connect_info=session, loop=loop, bots=bots)
         Mirai.__instance = self
         for bot in bots:
             bot.application = self
@@ -209,6 +208,7 @@ class Mirai(MiraiProtocol):
     ):
         # TODO: 支持传入单个Element
         from .message.data.plain import Plain
+        message_chain = MessageChain(message)
         async with self.session.post(
             self.url_root("sendGroupMessage", bot),
             json={

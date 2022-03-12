@@ -8,6 +8,7 @@ from functools import partial
 from . import Event, AbstractEvent
 from .listener import (Listener, ListeningStatus, ConcurrencyKind, EventPriority, Handler, callAndRemoveIfRequired,
                        GlobalEventListeners, ListenerRegistry)
+from ..message.data.single_message import SingleMessage
 
 
 class EventChannel:
@@ -45,7 +46,7 @@ class EventChannel:
     async def broadcast(event: Event):
         assert isinstance(event, AbstractEvent)
         event._intercepted = False
-        asyncio.get_running_loop().create_task(callAndRemoveIfRequired(event))  # fixme
+        asyncio.get_running_loop().create_task(callAndRemoveIfRequired(event))
 
     async def nextEvent(self,
                         event: Type[Event],
@@ -73,12 +74,28 @@ class EventChannel:
         return await future
 
 
-    def selectMessage(self, selector: Dict[str, Union[str, Callable]]):
+    def selectMessage(self, selector: Dict[str, Union[str, Callable, SingleMessage, List[SingleMessage]]], default=False):
         from .events.message import MessageEvent
         for k, v in selector.items():
-            async def listener(ev):
+            print(k, v)
+            message = None
+            if isinstance(v, str):
+                message = v
+            elif isinstance(v, Callable):
                 pass
-            GlobalEventChannel.INSTANCE.subscribe(MessageEvent, listener, concurrencyKind=ConcurrencyKind.CONCURRENT)
+            elif isinstance(v, SingleMessage):
+                message = v
+            elif isinstance(v, list):
+                message = v
+
+            if message:
+                async def listener(ev):
+                    if ev.messageChain.contentToString() == k:
+                        await ev.reply(message)
+                        return ListeningStatus.LISTENING
+                self.filterIsInstance(MessageEvent).subscribe(
+                    MessageEvent, listener, concurrencyKind=ConcurrencyKind.CONCURRENT
+                )
 
 
     def registerListenerHost(self, listenerHost):
@@ -86,7 +103,7 @@ class EventChannel:
 
 
     def subscribe(self,
-                  event: Type[Event],
+                  event: Type[Event],  # TODO
                   handler: Callable[[Event], Any],
                   priority: EventPriority = EventPriority.NORMAL,
                   concurrencyKind: ConcurrencyKind = ConcurrencyKind.LOCKED

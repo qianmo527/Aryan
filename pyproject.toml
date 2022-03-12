@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "aryan"
-version = "0.0.3.post1"
+version = "0.0.3.post2"
 description = "A small package"
 authors = ["qianmo527 <2816661524@qq.com>"]
 readme = "README.md"
-packages = [{ include = "aryan", from = "main" }]
+packages = [{ include = "aryan", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.9"

@@ -17,10 +17,12 @@ class MiraiProtocol:
     session: ClientSession
     connect_info: MiraiSession
     bots: List["Bot"] = []
+    loop: asyncio.AbstractEventLoop
 
-    def __init__(self, connect_info: MiraiSession, bots: List=[]):
+    def __init__(self, connect_info: MiraiSession, loop, bots: List=[]):
+        self.loop = loop or asyncio.new_event_loop()
         self.connect_info = connect_info
-        self.session = ClientSession()
+        self.session = ClientSession(loop=self.loop)
         from .bot import Bot
         self.bots = (bots, [bots])[isinstance(bots, Bot)]
 

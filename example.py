@@ -1,9 +1,8 @@
 import asyncio
-from main.aryan import Mirai, MiraiSession, Bot, BotConfiguration
-from main.aryan import GlobalEventChannel, EventPriority, ConcurrencyKind, ListeningStatus
-from main.aryan import GroupMessage, FriendMessage, MessageEvent
-from main.aryan import BotEvent, FriendInputStatusChangedEvent
-
+from src.aryan import Mirai, MiraiSession, Bot, BotConfiguration
+from src.aryan import GlobalEventChannel, EventPriority, ConcurrencyKind, ListeningStatus
+from src.aryan import GroupMessage, FriendMessage, MessageEvent
+from src.aryan import Plain, AtAll
 
 
 app = Mirai(
@@ -11,7 +10,7 @@ app = Mirai(
         verify_key="verifyKey",
         host="localhost:8080",
     ),
-    loop=asyncio.get_event_loop(),
+    loop=asyncio.new_event_loop(),
     bots=[
         # Bot(BotConfiguration(account=1375075223)),
         Bot(BotConfiguration(account=552282813))
@@ -23,15 +22,18 @@ async def main(event: GroupMessage):
     print("listener received event:", type(event))
     await event.reply(str(type(event)))
 
-    next_event: FriendMessage = await event.bot.eventChannel.nextEvent(FriendMessage)
-    await next_event.reply("True")
+    # next_event: FriendMessage = await event.bot.eventChannel.nextEvent(FriendMessage)
+    # await next_event.reply("True")
 
-# GlobalEventChannel.INSTANCE.filterIsInstance(BotEvent).subscribeOnce(FriendInputStatusChangedEvent, main)
+# GlobalEventChannel.INSTANCE.filterIsInstance(BotEvent).subscribeOnce(GroupMessage, main)
 
 GlobalEventChannel.INSTANCE.selectMessage({
-    "hello": "hello world",
-    "test": lambda ev: ev.reply("test")
+    "hello": "world",
+    "world": "hello",
+    # "hello world": [Plain("这是联合消息"), AtAll()]
+    # "test": lambda ev: ev.reply("test")
 })
+
 
 try:
     app.launch_blocking()
