@@ -3,6 +3,7 @@ import asyncio
 from asyncio import Lock
 from enum import Enum
 from typing import Dict, List, Type, Callable
+from weakref import ref
 
 from . import Event
 
@@ -116,8 +117,7 @@ async def callAndRemoveIfRequired(event: Event):
             if not isinstance(event, registry.type): continue
             listener = registry.listener
             task_queue.append(asyncio.create_task(process(container, registry, listener, event)))
-        for task in task_queue:
-            await task
+        await asyncio.gather(*task_queue)
 
     if event.isIntercepted: return
     container: List[ListenerRegistry] = GlobalEventListeners[EventPriority.MONITOR]

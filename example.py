@@ -2,7 +2,7 @@ import asyncio
 from src.aryan import Mirai, MiraiSession, Bot, BotConfiguration
 from src.aryan import GlobalEventChannel, EventPriority, ConcurrencyKind, ListeningStatus
 from src.aryan import GroupMessage, FriendMessage, MessageEvent
-from src.aryan import Plain, AtAll
+from src.aryan import Plain, Face
 
 
 app = Mirai(
@@ -12,8 +12,8 @@ app = Mirai(
     ),
     loop=asyncio.new_event_loop(),
     bots=[
-        # Bot(BotConfiguration(account=1375075223)),
-        Bot(BotConfiguration(account=552282813))
+        Bot(BotConfiguration(account=1375075223)),
+        # Bot(BotConfiguration(account=552282813))
     ]
 )
 
@@ -27,12 +27,13 @@ async def main(event: GroupMessage):
 
 # GlobalEventChannel.INSTANCE.filterIsInstance(BotEvent).subscribeOnce(GroupMessage, main)
 
-GlobalEventChannel.INSTANCE.selectMessage({
-    "hello": "world",
-    "world": "hello",
-    # "hello world": [Plain("这是联合消息"), AtAll()]
-    # "test": lambda ev: ev.reply("test")
-})
+GlobalEventChannel.INSTANCE.subscribeMessages({
+    "签到.*?": "签到成功!!!",
+    "test": Plain("received"),
+    "hello world": [Plain("这是联合消息"), Face(176)],
+    "test2": lambda ev: ev.reply("test"),
+    "default": "default reply"
+}, default=True)
 
 
 try:

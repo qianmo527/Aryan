@@ -1,9 +1,10 @@
 """事件通道实现"""
 import asyncio
 import re
-from typing import List, Type, Callable, Any, Optional, Dict, Union
+from typing import List, Type, Callable, Any, Optional, Dict, Union, Coroutine
+from types import MethodType
 from loguru import logger
-from functools import partial
+from functools import partial, wraps
 
 from . import Event, AbstractEvent
 from .listener import (Listener, ListeningStatus, ConcurrencyKind, EventPriority, Handler, callAndRemoveIfRequired,
@@ -11,10 +12,25 @@ from .listener import (Listener, ListeningStatus, ConcurrencyKind, EventPriority
 from ..message.data.single_message import SingleMessage
 
 
+def classmethod_decorator(func: Callable):
+    @wraps(func)
+    def wrapper(*_, **__):
+        print(dir(func))  # 判断第一位anno是否为self
+        print(func.__name__, func.__qualname__)
+        return func(*_, **__)
+
+    async def async_wrapper(*_, **__):
+        return await func(*_, *__)
+
+    if not isinstance(func, Coroutine):
+        return wrapper
+    return async_wrapper
+
+
 class EventChannel:
     baseEventClass: Type[Event]
 
-    def __init__(self, baseEventClass: Type[Event]=Event) -> None:
+    def __init__(self, baseEventClass: Type[Event] = Event) -> None:
         self.baseEventClass = baseEventClass
 
     def filter(self, filter: Callable[[Event], bool]):
@@ -22,7 +38,7 @@ class EventChannel:
         parent: "EventChannel" = self
         channel = EventChannel(self.baseEventClass)
 
-        def overrided_intercepted(func: Callable):
+        def overriden_intercepted(func: Callable):
             async def listener_object(ev):
                 filterResult: bool = False
                 try:
@@ -36,7 +52,7 @@ class EventChannel:
 
             return parent.intercepted(listener_object)
 
-        channel.intercepted = overrided_intercepted
+        channel.intercepted = overriden_intercepted
         return channel
 
     def filterIsInstance(self, event: Type[Event]):
@@ -73,34 +89,8 @@ class EventChannel:
             return await asyncio.wait_for(future, timeout)
         return await future
 
-
-    def selectMessage(self, selector: Dict[str, Union[str, Callable, SingleMessage, List[SingleMessage]]], default=False):
-        from .events.message import MessageEvent
-        for k, v in selector.items():
-            print(k, v)
-            message = None
-            if isinstance(v, str):
-                message = v
-            elif isinstance(v, Callable):
-                pass
-            elif isinstance(v, SingleMessage):
-                message = v
-            elif isinstance(v, list):
-                message = v
-
-            if message:
-                async def listener(ev):
-                    if ev.messageChain.contentToString() == k:
-                        await ev.reply(message)
-                        return ListeningStatus.LISTENING
-                self.filterIsInstance(MessageEvent).subscribe(
-                    MessageEvent, listener, concurrencyKind=ConcurrencyKind.CONCURRENT
-                )
-
-
     def registerListenerHost(self, listenerHost):
         pass
-
 
     def subscribe(self,
                   event: Type[Event],  # TODO
@@ -134,6 +124,43 @@ class EventChannel:
             return ListeningStatus.STOPPED
 
         return self.subscribeInternal(event, self.createListener(wrapper, concurrencyKind, priority))
+
+    def subscribeMessages(self,
+                          selector: Dict[str, Union[str, Callable, SingleMessage, List[SingleMessage]]],
+                          default=False):
+        # TODO 支持key自定义方法返回
+        """订阅消息事件并自动回复
+
+        Args:
+            selector: dict形式的选择器, 其中key为触发的消息条件(可以正则), value为进行的操作(如[str], [SingleMessage], [List[SingleMessage]])
+            default: 为True时, 将获取selector中的 `default` key作为默认回复, 如果default为空, 则获取selector最后一项的value作为默认回复
+
+        Example:
+            eventChannel.subscribeMessages({
+                "hello": "hello!!",
+                "签到.*?": Plain("签到成功"),
+            }, default=True)
+        """
+        from .events.message import MessageEvent
+        default_reply = selector.pop("default", list(selector.values())[-1])
+        need_default = True
+        async def func_call(value, ev):
+            if isinstance(value, (str, SingleMessage, list)):
+                return await ev.reply(value)
+            elif isinstance(value, Coroutine):
+                return await value(ev)
+            elif isinstance(value, Callable):
+                return value(ev)
+        for k, v in selector.items():
+            async def listener_obj(key, value, ev: MessageEvent):
+                if re.match(key, ev.messageChain.contentToString()):
+                    nonlocal need_default
+                    need_default = False
+                    return await func_call(value, ev)
+
+            self.subscribe(MessageEvent, partial(listener_obj, k, v), concurrencyKind=ConcurrencyKind.CONCURRENT)
+        self.subscribe(MessageEvent, lambda ev: func_call(default_reply, ev) if need_default else ...,
+                       concurrencyKind=ConcurrencyKind.CONCURRENT)
 
     # region impl
 

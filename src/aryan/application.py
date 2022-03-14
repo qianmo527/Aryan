@@ -214,8 +214,7 @@ class Mirai(MiraiProtocol):
             json={
                 "sessionKey": bot.configuration.http_session or bot.configuration.ws_session,
                 "target": target.id if isinstance(target, Group) else target,
-                "messageChain": [i.dict() for i in message.__root__] if isinstance(message, MessageChain)
-                                else [Plain(message).dict()],
+                "messageChain": [i.dict() for i in message_chain.__root__],
                 "quote": quote.id if isinstance(quote, Source) else quote
             }
         ) as response:

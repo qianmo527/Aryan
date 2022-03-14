@@ -7,6 +7,9 @@ class Face(MessageContent, CodableMessage):
     faceId: int
     name: str
 
+    def __init__(self, faceId: int, name: str="", *_, **__):
+        super().__init__(faceId=faceId, name=name)
+
     def contentToString(self) -> str:
         return f"[{self.name or '表情'}]"
 
