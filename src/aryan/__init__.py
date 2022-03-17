@@ -12,8 +12,7 @@ from .event.listener import (
     ConcurrencyKind,
     EventPriority,
     GlobalEventListeners,
-    ListenerHostInterface,
-    SimpleListenerHost
+    ListenerHostInterface
 )
 
 from .event.events.friend import (

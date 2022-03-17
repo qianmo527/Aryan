@@ -2,8 +2,9 @@
 import asyncio
 from asyncio import Lock
 from enum import Enum
-from typing import Dict, List, Type, Callable
-from weakref import ref
+from typing import List, Type, Callable
+import inspect
+
 
 from . import Event
 
@@ -19,8 +20,12 @@ class ListeningStatus(Enum):
 
 
 class ConcurrencyKind(Enum):
+    """并发类型"""
     CONCURRENT = 1,
+    "并发的处理事件"
+
     LOCKED = 0
+    "使用 [asyncio.Lock] 保证同一时刻只处理一个事件"
 
 
 class EventPriority(Enum):
@@ -82,11 +87,16 @@ class GlobalEventListeners(dict):
 GlobalEventListeners = GlobalEventListeners()
 
 
-class ListenerHostInterface:  # TODO: 强大的扩展性
+class ListenerHostInterface:
+    ignore: List[str]
+    filter: List[Callable]
 
-    def EventHandler(self): pass  # annotation
-class SimpleListenerHost(ListenerHostInterface):
-    pass
+    def __init__(self, ignore: List[str]=[], filter: List[Callable]=[]):
+        self.ignore = ignore
+        self.filter = filter
+
+    def cancelAll(self) -> None:
+        pass
 
 
 class Handler(Listener):
@@ -101,11 +111,14 @@ class Handler(Listener):
 
     async def onEvent(self, event: Event) -> ListeningStatus:
         if event.isCancelled: return ListeningStatus.STOPPED
-        status = await self.handler(event)
+        status = await self.handler(event)  # TODO 将inspect判断往前推
         if status == ListeningStatus.STOPPED:
             return ListeningStatus.STOPPED
         else:
             return ListeningStatus.LISTENING
+
+    def complete(self):
+        pass
 
 
 async def callAndRemoveIfRequired(event: Event):
@@ -121,18 +134,19 @@ async def callAndRemoveIfRequired(event: Event):
 
     if event.isIntercepted: return
     container: List[ListenerRegistry] = GlobalEventListeners[EventPriority.MONITOR]
-    # switch(match) area
     if len(container) == 0: return
-    elif len(container) == 1:
-        registry: ListenerRegistry = container[0]
-        if not isinstance(event, registry.type): return
-        await process(container, registry, registry.listener, event)
+    # elif len(container) == 1:
+    #     registry: ListenerRegistry = container[0]
+    #     if not isinstance(event, registry.type): return
+    #     await process(container, registry, registry.listener, event)
     else:
         task_queue = []
         for registry in container:
             if not isinstance(event, registry.type): continue
-            task_queue.append(asyncio.get_running_loop().create_task(process(container, registry, registry.listener, event)))
-        await asyncio.wait(task_queue)
+            task_queue.append(
+                asyncio.get_running_loop().create_task(process(container, registry, registry.listener, event))
+            )
+        await asyncio.gather(*task_queue)
 
 lock = Lock()
 

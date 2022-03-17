@@ -1,30 +1,15 @@
 """事件通道实现"""
 import asyncio
+from asyncio import Event as asyncio_Event
 import re
 from typing import List, Type, Callable, Any, Optional, Dict, Union, Coroutine
-from types import MethodType
 from loguru import logger
-from functools import partial, wraps
+from functools import partial
 
 from . import Event, AbstractEvent
 from .listener import (Listener, ListeningStatus, ConcurrencyKind, EventPriority, Handler, callAndRemoveIfRequired,
-                       GlobalEventListeners, ListenerRegistry)
+                       GlobalEventListeners, ListenerRegistry, ListenerHostInterface)
 from ..message.data.single_message import SingleMessage
-
-
-def classmethod_decorator(func: Callable):
-    @wraps(func)
-    def wrapper(*_, **__):
-        print(dir(func))  # 判断第一位anno是否为self
-        print(func.__name__, func.__qualname__)
-        return func(*_, **__)
-
-    async def async_wrapper(*_, **__):
-        return await func(*_, *__)
-
-    if not isinstance(func, Coroutine):
-        return wrapper
-    return async_wrapper
 
 
 class EventChannel:
@@ -89,7 +74,7 @@ class EventChannel:
             return await asyncio.wait_for(future, timeout)
         return await future
 
-    def registerListenerHost(self, listenerHost):
+    def registerListenerHost(self, listenerHost: Union[ListenerHostInterface, Type[ListenerHostInterface]]):
         pass
 
     def subscribe(self,
