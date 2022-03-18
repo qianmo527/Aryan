@@ -21,9 +21,9 @@ app = Mirai(
 )
 
 
-async def main(event: GroupMessage):
+def main(event: GroupMessage):
     print("listener received event:", type(event))
-    # await event.reply(str(type(event)))
+    return event.reply(str(type(event)))
 
     event.intercept()
 

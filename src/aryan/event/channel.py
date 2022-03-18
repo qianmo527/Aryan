@@ -10,6 +10,7 @@ from . import Event, AbstractEvent
 from .listener import (Listener, ListeningStatus, ConcurrencyKind, EventPriority, Handler, callAndRemoveIfRequired,
                        GlobalEventListeners, ListenerRegistry, ListenerHostInterface)
 from ..message.data.single_message import SingleMessage
+from ..utils import async_
 
 
 class EventChannel:
@@ -31,7 +32,7 @@ class EventChannel:
                 except Exception as e:
                     logger.warning(f"channel filter caught an exception: {e}")
                 if filterResult:
-                    return await func(ev)
+                    return await func(ev)  # TODO
                 else:
                     return ListeningStatus.LISTENING
 
@@ -105,7 +106,7 @@ class EventChannel:
                       concurrencyKind: ConcurrencyKind = ConcurrencyKind.CONCURRENT
                       ) -> Listener:
         async def wrapper(received_event):
-            asyncio.create_task(handler(received_event))
+            asyncio.create_task(async_(handler(received_event)))
             return ListeningStatus.STOPPED
 
         return self.subscribeInternal(event, self.createListener(wrapper, concurrencyKind, priority))

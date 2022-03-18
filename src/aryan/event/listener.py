@@ -7,6 +7,7 @@ import inspect
 
 
 from . import Event
+from ..utils import async_
 
 
 class ListeningStatus(Enum):
@@ -111,7 +112,7 @@ class Handler(Listener):
 
     async def onEvent(self, event: Event) -> ListeningStatus:
         if event.isCancelled: return ListeningStatus.STOPPED
-        status = await self.handler(event)  # TODO 将inspect判断往前推
+        status = await async_(self.handler(event))
         if status == ListeningStatus.STOPPED:
             return ListeningStatus.STOPPED
         else:
@@ -158,8 +159,14 @@ async def process(
 ):
     if listener.concurrencyKind == ConcurrencyKind.LOCKED:
         async with lock:
-            if await listener.onEvent(event) == ListeningStatus.STOPPED:
+            result = await listener.onEvent(event)
+            if result == ListeningStatus.STOPPED:
                 container.remove(registry)
+            elif inspect.isawaitable(result):
+                await async_(result)
     elif listener.concurrencyKind == ConcurrencyKind.CONCURRENT:
-        if await listener.onEvent(event) == ListeningStatus.STOPPED:
+        result = await listener.onEvent(event)
+        if result == ListeningStatus.STOPPED:
             container.remove(registry)
+        elif inspect.isawaitable(result):
+            await result
