@@ -58,7 +58,7 @@ class ListenerHost(ListenerHostInterface):
         return ListeningStatus.LISTENING
 
     @ListenerHostInterface.EventHandler
-    def quick_response(self, event: GroupMessage) -> ListeningStatus.STOPPED:
+    def main(self, event: GroupMessage) -> ListeningStatus.STOPPED:
         return event.reply("hello world!!!")
 
 GlobalEventChannel.INSTANCE.registerListenerHost(ListenerHost())

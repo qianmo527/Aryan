@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aryan"
-version = "0.0.3.post2"
+version = "0.1.0"
 description = "A small package"
 authors = ["qianmo527 <2816661524@qq.com>"]
 readme = "README.md"
