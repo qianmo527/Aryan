@@ -3,7 +3,7 @@ from typing import Union
 
 from src.aryan import Mirai, MiraiSession, Bot, BotConfiguration
 from src.aryan import GlobalEventChannel, EventPriority, ConcurrencyKind, ListeningStatus
-from src.aryan import GroupMessage, FriendMessage, MessageEvent
+from src.aryan import GroupMessage, FriendMessage, LaunchEvent
 from src.aryan import Plain, Face
 from src.aryan import ListenerHostInterface
 
@@ -13,7 +13,7 @@ app = Mirai(
         verify_key="verifyKey",
         host="localhost:8080",
     ),
-    loop=asyncio.new_event_loop(),
+    loop=asyncio.get_event_loop(),
     bots=[
         Bot(BotConfiguration(account=1375075223)),
         # Bot(BotConfiguration(account=552282813))
@@ -21,41 +21,45 @@ app = Mirai(
 )
 
 
-def main(event: GroupMessage):
-    print("listener received event:", type(event))
-    return event.reply(str(type(event)))
+# @GlobalEventChannel.INSTANCE.trigger()
+def main(event: Union[GroupMessage, FriendMessage]):
+    print("listener received event:", event.__class__.__name__)
+    return event.reply(event.__class__.__name__)
 
     event.intercept()
 
     # next_event: FriendMessage = await event.bot.eventChannel.nextEvent(FriendMessage)
     # await next_event.reply("True")
 
-GlobalEventChannel.INSTANCE.subscribeOnce(GroupMessage, main)
+# GlobalEventChannel.INSTANCE.subscribeOnce(handler=main)
 
-GlobalEventChannel.INSTANCE.subscribeMessages({
-    "签到.*?": "签到成功!!!",
-    "test": Plain("received"),
-    "hello world": [Plain("这是联合消息"), Face(176)],
-    "test2": lambda ev: ev.reply("test"),
-    "default": "default reply"
-}, default=True)
+
+# GlobalEventChannel.INSTANCE.subscribeMessages({
+#     "签到": "签到成功!!!",
+#     "test": Plain("received"),
+#     "hello world": [Plain("这是联合消息"), Face(176)],
+#     "test2": lambda ev: ev.reply("test"),
+#     "default": "default reply"
+# }, default=True)
+
+
+# @GlobalEventChannel.addBackgroundTask()
+# async def backgroundTask():
+#     while True:
+#         print("in backgroup task")
+#         await asyncio.sleep(1)
 
 
 class ListenerHost(ListenerHostInterface):
-    ignore = ["ignored_function"]
-    filter = [] or {}
-    filter = [{}, lambda ev: ev.sender.id == 2816661524]  # TODO 是否支持动态更改(即是否list.copy())
 
-    async def onEvent(event: Union[GroupMessage, FriendMessage]) -> ListeningStatus.STOPPED:
+    @ListenerHostInterface.EventHandler
+    async def onEvent(self, event: Union[GroupMessage, FriendMessage]) -> ListeningStatus.STOPPED:
         print("Message received")
+        return ListeningStatus.LISTENING
 
-    def sync_quick_response(self):
-        pass
-
-    def tool(self):
-        pass
-
-    ignore.append(tool)
+    @ListenerHostInterface.EventHandler
+    def quick_response(self, event: GroupMessage) -> ListeningStatus.STOPPED:
+        return event.reply("hello world!!!")
 
 GlobalEventChannel.INSTANCE.registerListenerHost(ListenerHost())
 

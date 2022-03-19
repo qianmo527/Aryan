@@ -1,16 +1,17 @@
 """事件通道实现"""
 import asyncio
-from asyncio import Event as asyncio_Event
+from asyncio import Lock
 import re
-from typing import List, Type, Callable, Any, Optional, Dict, Union, Coroutine
+from typing import Iterable, List, Type, Callable, Any, Optional, Dict, Union, Coroutine
 from loguru import logger
-from functools import partial
+from functools import partial, wraps
+import inspect
 
 from . import Event, AbstractEvent
 from .listener import (Listener, ListeningStatus, ConcurrencyKind, EventPriority, Handler, callAndRemoveIfRequired,
                        GlobalEventListeners, ListenerRegistry, ListenerHostInterface)
 from ..message.data.single_message import SingleMessage
-from ..utils import async_
+from ..utils import async_, get_event_from_func
 
 
 class EventChannel:
@@ -32,9 +33,8 @@ class EventChannel:
                 except Exception as e:
                     logger.warning(f"channel filter caught an exception: {e}")
                 if filterResult:
-                    return await func(ev)  # TODO
-                else:
-                    return ListeningStatus.LISTENING
+                    return await async_(func(ev))
+                return ListeningStatus.LISTENING
 
             return parent.intercepted(listener_object)
 
@@ -76,32 +76,50 @@ class EventChannel:
         return await future
 
     def registerListenerHost(self, listenerHost: Union[ListenerHostInterface, Type[ListenerHostInterface]]):
-        pass
+        if isinstance(listenerHost, type):
+            listenerHost = listenerHost()
+
+        for func in [i[1] for i in inspect.getmembers(listenerHost, lambda value: getattr(value, "__handler__", None))]:
+            self.subscribe(handler=func, concurrencyKind=ConcurrencyKind.CONCURRENT)
 
     def subscribe(self,
-                  event: Type[Event],  # TODO
-                  handler: Callable[[Event], Any],
+                  event: Type[Event]=None,
+                  handler: Callable[[Event], Any]=lambda ev: print("received event:", ev.__class__.__name__),
                   priority: EventPriority = EventPriority.NORMAL,
                   concurrencyKind: ConcurrencyKind = ConcurrencyKind.LOCKED
                   ) -> Listener:
-        # TODO: 何尝不直接获取参数的anno作为event type呢
-        return self.subscribeInternal(event, self.createListener(handler, concurrencyKind, priority))
+        if event is None:
+            event = get_event_from_func(handler)
+
+        if return_value := handler.__annotations__.get("return"):
+            if return_value is ListeningStatus.LISTENING:
+                if isinstance(event, Iterable):
+                    return [self.subscribeAlways(ev, handler, priority, concurrencyKind) for ev in event]
+                return self.subscribeAlways(event, handler, priority, concurrencyKind)
+            elif return_value is ListeningStatus.STOPPED:
+                if isinstance(event, Iterable):
+                    return [self.subscribeOnce(ev, handler, priority, concurrencyKind) for ev in event]
+                return self.subscribeOnce(event, handler, priority, concurrencyKind)
+
+        return self.subscribeInternal(event or self.baseEventClass, self.createListener(handler, concurrencyKind, priority))
 
     def subscribeAlways(self,
-                        event: Type[Event],
-                        handler: Callable,
+                        event: Type[Event]=None,
+                        handler: Callable=lambda ev: print("received event:", ev.__class__.__name__),
                         priority: EventPriority = EventPriority.NORMAL,
                         concurrencyKind: ConcurrencyKind = ConcurrencyKind.CONCURRENT
                         ) -> Listener:
         async def wrapper(received_event):
-            await handler(received_event)
+            await async_(handler(received_event))
             return ListeningStatus.LISTENING
 
-        return self.subscribeInternal(event, self.createListener(wrapper, concurrencyKind, priority))
+        if event is None:
+            event = get_event_from_func(handler)
+        return self.subscribeInternal(event or self.baseEventClass, self.createListener(wrapper, concurrencyKind, priority))
 
     def subscribeOnce(self,
-                      event: Type[Event],
-                      handler: Callable,
+                      event: Type[Event]=None,
+                      handler: Callable=lambda ev: print("received event:", ev.__class__.__name__),
                       priority: EventPriority = EventPriority.NORMAL,
                       concurrencyKind: ConcurrencyKind = ConcurrencyKind.CONCURRENT
                       ) -> Listener:
@@ -109,7 +127,51 @@ class EventChannel:
             asyncio.create_task(async_(handler(received_event)))
             return ListeningStatus.STOPPED
 
-        return self.subscribeInternal(event, self.createListener(wrapper, concurrencyKind, priority))
+        if event is None:
+            event = get_event_from_func(handler)
+        return self.subscribeInternal(event or self.baseEventClass, self.createListener(wrapper, concurrencyKind, priority))
+
+    def trigger(self,
+        event: Event=None,
+        priority: EventPriority=EventPriority.NORMAL,
+        concurrencyKind: ConcurrencyKind=ConcurrencyKind.LOCKED):
+        """subscribe的装饰器版本
+        """
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            self.subscribe(event, func, priority, concurrencyKind)
+            return wrapper
+        return decorator
+
+    def triggerAlways(self,
+        event: Event=None,
+        priority: EventPriority=EventPriority.NORMAL,
+        concurrencyKind: ConcurrencyKind=ConcurrencyKind.CONCURRENT):
+        """subscribeAlways的装饰器版本
+        """
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            self.subscribeAlways(event, func, priority, concurrencyKind)
+            return wrapper
+        return decorator
+
+    def triggerOnce(self,
+        event: Event=None,
+        priority: EventPriority=EventPriority.NORMAL,
+        concurrencyKind: ConcurrencyKind=ConcurrencyKind.CONCURRENT):
+        """subscribeOnce的装饰器版本
+        """
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            self.subscribeOnce(event, func, priority, concurrencyKind)
+            return wrapper
+        return decorator
 
     def subscribeMessages(self,
                           selector: Dict[str, Union[str, Callable, SingleMessage, List[SingleMessage]]],
@@ -118,35 +180,57 @@ class EventChannel:
         """订阅消息事件并自动回复
 
         Args:
-            selector: dict形式的选择器, 其中key为触发的消息条件(可以正则), value为进行的操作(如[str], [SingleMessage], [List[SingleMessage]])
+            selector: dict形式的选择器, 其中key为触发的消息条件, value为进行的操作(如[str], [SingleMessage], [List[SingleMessage]], [Callable])
             default: 为True时, 将获取selector中的 `default` key作为默认回复, 如果default为空, 则获取selector最后一项的value作为默认回复
 
         Example:
             eventChannel.subscribeMessages({
                 "hello": "hello!!",
-                "签到.*?": Plain("签到成功"),
+                "签到": Plain("签到成功"),
+                "default": "default reply"
             }, default=True)
         """
         from .events.message import MessageEvent
         default_reply = selector.pop("default", list(selector.values())[-1])
-        need_default = True
         async def func_call(value, ev):
             if isinstance(value, (str, SingleMessage, list)):
                 return await ev.reply(value)
-            elif isinstance(value, Coroutine):
-                return await value(ev)
             elif isinstance(value, Callable):
-                return value(ev)
+                return await async_(value(ev))
+
+        lock = Lock()
+        can_reply = True
         for k, v in selector.items():
             async def listener_obj(key, value, ev: MessageEvent):
-                if re.match(key, ev.messageChain.contentToString()):
-                    nonlocal need_default
-                    need_default = False
-                    return await func_call(value, ev)
+                if ev.messageChain.contentToString() == key:
+                    nonlocal lock, can_reply
+                    async with lock:
+                        can_reply = False
+                        return await func_call(value, ev)
 
             self.subscribe(MessageEvent, partial(listener_obj, k, v), concurrencyKind=ConcurrencyKind.CONCURRENT)
-        self.subscribe(MessageEvent, lambda ev: func_call(default_reply, ev) if need_default else ...,
-                       concurrencyKind=ConcurrencyKind.CONCURRENT)
+        if default:
+            async def default_wrapper(ev):
+                nonlocal lock, default_reply, can_reply
+                async with lock:
+                    if can_reply:
+                        return await func_call(default_reply, ev)
+                    can_reply = True
+            self.subscribe(MessageEvent, default_wrapper, concurrencyKind=ConcurrencyKind.CONCURRENT)
+
+    @staticmethod
+    def addBackgroundTask(func: Optional[Union[Coroutine, Callable]]=None):
+        if func is None:
+            def wrapper(func_):
+                EventChannel.addBackgroundTask(func_)
+                return func_
+            return wrapper
+
+        async def listener(ev):
+            asyncio.create_task(func())
+        from .events.app import LaunchEvent
+        GlobalEventChannel.INSTANCE.subscribe(LaunchEvent, listener, EventPriority.HIGHEST, ConcurrencyKind.CONCURRENT)
+
 
     # region impl
 
@@ -157,7 +241,6 @@ class EventChannel:
     @staticmethod
     def subscribeInternal(eventClass: Type[Event], listener: Listener):
         GlobalEventListeners[listener.priority].append(ListenerRegistry(eventClass, listener))
-        # TODO: 将handler与registry绑定 移除时销毁registry
         return listener
 
     def createListener(self, handler: Callable, concurrencyKind: ConcurrencyKind, priority: EventPriority):

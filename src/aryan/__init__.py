@@ -64,6 +64,10 @@ from .event.events.message import (
     GroupMessage,
     TempMessage
 )
+from .event.events.app import (
+    LaunchEvent,
+    ShutdownEvent
+)
 
 from .message.message_receipt import MessageReceipt
 from .message.code.codable import CodableMessage

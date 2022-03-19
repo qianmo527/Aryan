@@ -36,8 +36,7 @@ class Mirai(MiraiProtocol):
     def getInstance(cls):
         if cls.__instance:
             return cls.__instance
-        else:
-            return None
+        return None
 
     def url_root(self, path: str, bot: "Bot"):
         return "{}://{}/{}".format("ws" if bot.configuration.ws_session else "http", self.connect_info.host, path)
@@ -89,24 +88,26 @@ class Mirai(MiraiProtocol):
     def log_formatter(self, event: Event, bot: "Bot"):
         from .event.events.message import FriendMessage, GroupMessage, TempMessage
         if isinstance(event, FriendMessage):
-            self.logger.info(
+            return self.logger.info(
                 f"Bot.{bot.configuration.account}: {event.sender.nickname}({event.sender.id}) -> "
                 f"{event.messageChain.display()}"
             )
         elif isinstance(event, GroupMessage):
-            self.logger.info(
+            return self.logger.info(
                 f"Bot.{bot.configuration.account}: [{event.sender.group.name}({event.sender.group.id})] "
                 f"{event.sender.name}({event.sender.id}) -> {event.messageChain.display()}"
             )
         elif isinstance(event, TempMessage):
-            self.logger.info(
+            return self.logger.info(
                 f"Bot.{bot.configuration.account}: [{event.sender.group.name}({event.sender.group.id})] "
                 f"{event.sender.name}(Temp {event.sender.id}) -> {event.messageChain.display()}"
             )
-        else:
-            self.logger.info(f"Bot.{bot.configuration.account}: Event: {event.__repr__()}")
+        return self.logger.info(f"Bot.{bot.configuration.account}: Event: {event.__repr__()}")
 
     async def shutdown(self):
+        from .event.events.app import ShutdownEvent
+        from .event.channel import GlobalEventChannel
+        await GlobalEventChannel.broadcast(ShutdownEvent())
         await self.session.close()
         for t in asyncio.all_tasks(self.loop):
             if t is not asyncio.current_task(self.loop):
@@ -122,6 +123,9 @@ class Mirai(MiraiProtocol):
 
     async def lifecycle(self):
         self._update_forward_refs()
+        from .event.events.app import LaunchEvent
+        from .event.channel import GlobalEventChannel
+        await GlobalEventChannel.INSTANCE.broadcast(LaunchEvent())
         await asyncio.gather(*[self.verify(bot) for bot in self.bots])
         # await asyncio.gather(*[bot.init() for bot in self.bots])
         await asyncio.gather(*[self.ws_all(bot) for bot in self.bots])
@@ -187,18 +191,22 @@ class Mirai(MiraiProtocol):
     ):
         # TODO: 支持传入单个Element或List[Element]
         from .message.data.plain import Plain
+        message_chain = MessageChain(message)
         async with self.session.post(
             self.url_root("sendFriendMessage", bot),
             json={
                 "sessionKey": bot.configuration.http_session or bot.configuration.ws_session,
                 "target": target.id if isinstance(target, Friend) else target,
-                "messageChain": [i.json() for i in message.__root__] if isinstance(message, MessageChain)
-                                else [Plain(message).dict()],
+                "messageChain": [i.dict() for i in message_chain.__root__],
                 "quote": quote.id if isinstance(quote, Source) else quote
             }
         ) as response:
             response.raise_for_status()
             print(await response.json())
+            self.logger.info(
+                f"Bot.{bot.configuration.account}: Friend({target if isinstance(target, int) else target.id}) <- "
+                f"{message_chain.display()}"
+            )
 
     async def sendGroupMessage(self,
         bot: "Bot",
@@ -220,6 +228,10 @@ class Mirai(MiraiProtocol):
         ) as response:
             response.raise_for_status()
             print(await response.json())
+            self.logger.info(
+                f"Bot.{bot.configuration.account}: Friend({target if isinstance(target, int) else target.id}) <- "
+                f"{message_chain.display()}"
+            )
 
     async def sendTempMessage(self,
         bot: "Bot",
@@ -228,7 +240,6 @@ class Mirai(MiraiProtocol):
         quote: Optional[Union[Source, int]]=None,
         group: Optional[Union[Group, int]]=None
     ):
-        # TODO: 支持传入单个Element
         from .message.data.plain import Plain
         async with self.session.post(
             self.url_root("sendGroupMessage", bot),
@@ -244,6 +255,7 @@ class Mirai(MiraiProtocol):
         ) as response:
             response.raise_for_status()
             print(await response.json())
+            # TODO Temp message display
 
     async def sendNudge(self): pass
 

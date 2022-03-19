@@ -4,6 +4,7 @@ from asyncio import Lock
 from enum import Enum
 from typing import List, Type, Callable
 import inspect
+from functools import wraps
 
 
 from . import Event
@@ -89,12 +90,17 @@ GlobalEventListeners = GlobalEventListeners()
 
 
 class ListenerHostInterface:
-    ignore: List[str]
-    filter: List[Callable]
 
-    def __init__(self, ignore: List[str]=[], filter: List[Callable]=[]):
-        self.ignore = ignore
-        self.filter = filter
+    @staticmethod
+    def EventHandler(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        wrapper.__handler__ = True
+        return wrapper
+
+    def registerTo(self, channel):
+        channel.registerListenerHost(self)
 
     def cancelAll(self) -> None:
         pass
@@ -115,8 +121,7 @@ class Handler(Listener):
         status = await async_(self.handler(event))
         if status == ListeningStatus.STOPPED:
             return ListeningStatus.STOPPED
-        else:
-            return ListeningStatus.LISTENING
+        return ListeningStatus.LISTENING
 
     def complete(self):
         pass
@@ -136,18 +141,13 @@ async def callAndRemoveIfRequired(event: Event):
     if event.isIntercepted: return
     container: List[ListenerRegistry] = GlobalEventListeners[EventPriority.MONITOR]
     if len(container) == 0: return
-    # elif len(container) == 1:
-    #     registry: ListenerRegistry = container[0]
-    #     if not isinstance(event, registry.type): return
-    #     await process(container, registry, registry.listener, event)
-    else:
-        task_queue = []
-        for registry in container:
-            if not isinstance(event, registry.type): continue
-            task_queue.append(
-                asyncio.get_running_loop().create_task(process(container, registry, registry.listener, event))
-            )
-        await asyncio.gather(*task_queue)
+    task_queue = []
+    for registry in container:
+        if not isinstance(event, registry.type): continue
+        task_queue.append(
+            asyncio.get_running_loop().create_task(process(container, registry, registry.listener, event))
+        )
+    await asyncio.gather(*task_queue)
 
 lock = Lock()
 
